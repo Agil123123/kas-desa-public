@@ -1,0 +1,8 @@
+{
+  "name": "kas-karangtaruna-root",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ]
+}

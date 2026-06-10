@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Jimpitan Desa Digital",
-  description: "Sistem Digitalisasi Jimpitan RT/RW Berbasis QR Code & PWA",
+  title: "NawaPintar",
+  description: "Sistem Informasi Manajemen Jimpitan",
 };
 
 export default function RootLayout({

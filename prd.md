@@ -74,10 +74,10 @@ Audit Log	Log Aktivitas	Catat seluruh aksi pengguna
 •	OCR kamera untuk baca nominal otomatis
 
 5. User Personas
-Persona 1 — Pak RT (Super Admin / Ketua RT)
+Persona 1 — Admin (Super Admin)
 Atribut	Detail
-Nama Contoh	Bapak Slamet, 52 tahun
-Peran	Ketua RT 04, juga bertindak sebagai Super Admin sistem
+Nama Contoh	Agil, 25 tahun
+Peran	Admin, juga bertindak sebagai Super Admin sistem
 Literasi Digital	Sedang — terbiasa dengan WhatsApp dan Excel sederhana
 Kebutuhan Utama	Melihat total pemasukan, memantau warga tidak aktif, mencetak laporan bulanan
 Pain Point	Harus menghitung manual dari buku tiap akhir bulan untuk laporan ke RW

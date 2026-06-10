@@ -9,7 +9,7 @@ export default function Personas() {
     {
       role: "Bendahara",
       name: "Bendahara",
-      benefit: "Buku kas terupdate otomatis setiap ada jimpitan masuk. Akhir bulan tinggal klik tombol ekspor Excel untuk laporan rapat.",
+      benefit: "Buku kas terupdate otomatis setiap ada transaksi keuangan. Akhir bulan tinggal klik tombol ekspor Excel untuk laporan rapat.",
       color: "bg-purple-500"
     },
     {
@@ -35,7 +35,7 @@ export default function Personas() {
             Sistem kami membagi peran pengguna secara spesifik agar fungsi organisasi dapat berjalan secara efisien dan terkontrol.
           </p>
         </div>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {personas.map((persona, index) => (
             <div key={index} className="relative group h-full">

@@ -11,7 +11,7 @@ export default function Home() {
       <Navbar />
       <HeroSection />
       <Features />
-      <StrukturOrganisasi />
+      <StrukturOrganisasi mode="deskripsi" />
       <Personas />
       <Footer />
     </main>
