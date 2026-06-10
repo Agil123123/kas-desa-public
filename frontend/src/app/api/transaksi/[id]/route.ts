@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { db, transaksi } from '@kas/backend';
+import { db, transaksi, kasKarangtaruna, users, auditLog } from '@kas/backend';
 import { eq } from 'drizzle-orm';
+import { cookies } from 'next/headers';
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -28,8 +29,48 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  await db.delete(transaksi).where(eq(transaksi.id, id));
-  return NextResponse.json({ success: true });
-}
+  try {
+    const { id } = await params;
 
+    // Verify Super Admin
+    const sessionToken = (await cookies()).get('session_token')?.value;
+    if (!sessionToken) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const currentUser = await db.select().from(users).where(eq(users.sessionToken, sessionToken));
+    if (!currentUser.length || currentUser[0].role !== 'Super Admin') {
+      return NextResponse.json({ error: 'Hanya Super Admin yang dapat menghapus transaksi' }, { status: 403 });
+    }
+
+    // Get transaction details before deletion (for audit log)
+    const trxData = await db.select().from(transaksi).where(eq(transaksi.id, id));
+    if (!trxData.length) {
+      return NextResponse.json({ error: 'Transaksi tidak ditemukan' }, { status: 404 });
+    }
+    const trx = trxData[0];
+
+    // Delete related kas entry first
+    await db.delete(kasKarangtaruna).where(eq(kasKarangtaruna.transaksiId, id));
+
+    // Delete the transaction
+    await db.delete(transaksi).where(eq(transaksi.id, id));
+
+    // Write audit log
+    try {
+      await db.insert(auditLog).values({
+        id: `log-${Date.now()}`,
+        userId: currentUser[0].id,
+        aksi: 'DELETE',
+        tabel: 'transaksi',
+        keterangan: `Menghapus transaksi ${trx.noTransaksi} (Rp ${trx.nominal}) - ${trx.kategori}`,
+      });
+    } catch (e) {
+      console.error('Failed to write audit log', e);
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('API Error:', error);
+    return NextResponse.json({ error: 'Terjadi kesalahan internal pada server' }, { status: 500 });
+  }
+}

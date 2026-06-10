@@ -20,6 +20,8 @@ export default function RiwayatTransaksiPage() {
   const [filterWaktu, setFilterWaktu] = useState("Semua Waktu");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [userRole, setUserRole] = useState("");
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const fetchTransactions = useCallback(async () => {
     setLoading(true);
@@ -29,7 +31,27 @@ export default function RiwayatTransaksiPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchTransactions(); }, [fetchTransactions]);
+  useEffect(() => {
+    fetchTransactions();
+    fetch('/api/auth/me').then(r => r.json()).then(d => { if (d?.user?.role) setUserRole(d.user.role); }).catch(() => {});
+  }, [fetchTransactions]);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus transaksi ini? Tindakan ini tidak dapat dibatalkan.')) return;
+    setDeleting(id);
+    try {
+      const res = await fetch(`/api/transaksi/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchTransactions();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Gagal menghapus transaksi');
+      }
+    } catch {
+      alert('Gagal menghapus transaksi');
+    }
+    setDeleting(null);
+  };
 
   // Filter Logic
   const getFilteredData = () => {
@@ -119,6 +141,7 @@ export default function RiwayatTransaksiPage() {
                   <th className="py-4 px-6 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kategori</th>
                   <th className="py-4 px-6 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nominal</th>
                   <th className="py-4 px-6 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Petugas</th>
+                  {userRole === 'Super Admin' && <th className="py-4 px-6 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -146,10 +169,21 @@ export default function RiwayatTransaksiPage() {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">{trx.namaPetugas || '-'}</td>
+                    {userRole === 'Super Admin' && (
+                      <td className="py-4 px-6 whitespace-nowrap">
+                        <button
+                          onClick={() => handleDelete(trx.id)}
+                          disabled={deleting === trx.id}
+                          className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:hover:bg-red-900/40 dark:text-red-400 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+                        >
+                          {deleting === trx.id ? 'Menghapus...' : 'Hapus'}
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
                 {filteredData.length === 0 && (
-                  <tr><td colSpan={5} className="py-8 text-center text-gray-400">Tidak ada transaksi untuk periode ini.</td></tr>
+                  <tr><td colSpan={userRole === 'Super Admin' ? 6 : 5} className="py-8 text-center text-gray-400">Tidak ada transaksi untuk periode ini.</td></tr>
                 )}
               </tbody>
             </table>
