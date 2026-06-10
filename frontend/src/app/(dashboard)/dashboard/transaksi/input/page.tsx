@@ -122,7 +122,7 @@ export default function InputTransaksiPage() {
             <div className="relative w-full max-w-sm aspect-square bg-gray-900 rounded-2xl overflow-hidden shadow-inner flex flex-col items-center justify-center mb-6 border-4 border-gray-100 dark:border-gray-700">
               <Scanner 
                 onScan={handleScan}
-                onError={(err) => setCamError(err?.message || "Kamera diblokir atau tidak ditemukan")}
+                onError={(err: any) => setCamError(err?.message || "Kamera diblokir atau tidak ditemukan")}
                 components={{
                   audio: false,
                   finder: false,

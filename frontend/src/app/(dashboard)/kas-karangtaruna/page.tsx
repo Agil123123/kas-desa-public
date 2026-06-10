@@ -73,7 +73,7 @@ export default function KasKarangtarunaPage() {
       });
 
       setShowModal(false);
-      setForm({ jenis: 'Masuk', nominal: '', uraian: '' });
+      setForm({ jenis: 'Masuk', nominal: '', uraian: '', tanggal: '' });
       fetchLedger();
     } catch (e) {
       alert('Gagal menyimpan transaksi.');
