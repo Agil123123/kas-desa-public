@@ -98,3 +98,13 @@ export const notifications = sqliteTable('notifications', {
   isRead: integer('is_read', { mode: 'boolean' }).default(false), // Simple global read status for simplicity, or we can leave it
   createdAt: text('created_at').default(sql`(datetime('now','localtime'))`),
 });
+
+// ── Audit Log ──────────────────────────────────────────
+export const auditLog = sqliteTable('audit_log', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').references(() => users.id).notNull(),
+  aksi: text('aksi').notNull(), // CREATE, UPDATE, DELETE
+  tabel: text('tabel').notNull(), // 'warga', 'pengaturan', 'anggota'
+  keterangan: text('keterangan').notNull(),
+  createdAt: text('created_at').default(sql`(datetime('now','localtime'))`),
+});

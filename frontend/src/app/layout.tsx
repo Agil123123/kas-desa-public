@@ -12,9 +12,21 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+import type { Viewport } from 'next';
+
+export const viewport: Viewport = {
+  themeColor: "#10b981",
+};
+
 export const metadata: Metadata = {
   title: "NawaPintar",
-  description: "Sistem Informasi Manajemen Jimpitan",
+  description: "Sistem Informasi Manajemen Keuangan Organisasi Desa",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "NawaPintar",
+  },
 };
 
 export default function RootLayout({
