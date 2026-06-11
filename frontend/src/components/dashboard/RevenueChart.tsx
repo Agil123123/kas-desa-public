@@ -50,15 +50,12 @@ export default function RevenueChart({ title = "Tren Pemasukan", type = "combine
     return null;
   };
 
-  const dataMax = Math.max(
-    ...data.map(d => Math.max(d.karangtaruna || 0, d.jimpitan || 0, d.amount || 0)),
-    0
-  );
-  const maxTick = Math.ceil(dataMax / 500000) * 500000 || 500000;
-  const ticks = [];
-  for (let i = 0; i <= maxTick; i += 500000) {
-    ticks.push(i);
-  }
+  const formatYAxis = (value: number) => {
+    if (!isMobile) return value.toLocaleString('id-ID');
+    if (value >= 1000000) return `${(value / 1000000).toFixed(value % 1000000 === 0 ? 0 : 1).replace('.', ',')}Jt`;
+    if (value >= 1000) return `${(value / 1000).toFixed(0)}Rb`;
+    return value.toString();
+  };
 
   return (
     <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col">
@@ -88,7 +85,7 @@ export default function RevenueChart({ title = "Tren Pemasukan", type = "combine
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
-            margin={{ top: 20, right: isMobile ? 0 : 10, left: isMobile ? -20 : 10, bottom: 0 }}
+            margin={{ top: 20, right: isMobile ? 0 : 10, left: isMobile ? -5 : 10, bottom: 0 }}
             barGap={isMobile ? 2 : 8}
           >
             <defs>
@@ -112,11 +109,11 @@ export default function RevenueChart({ title = "Tren Pemasukan", type = "combine
             <YAxis 
               axisLine={false} 
               tickLine={false} 
-              ticks={ticks}
-              domain={[0, maxTick]}
-              width={isMobile ? 55 : 80}
+              domain={[0, 'auto']}
+              tickCount={isMobile ? 5 : 6}
+              width={isMobile ? 40 : 80}
               tick={{ fill: '#9ca3af', fontSize: isMobile ? 10 : 12, fontWeight: 500 }}
-              tickFormatter={(value) => value.toLocaleString('id-ID')}
+              tickFormatter={formatYAxis}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(156, 163, 175, 0.1)' }} />
             {type === 'combined' ? (
