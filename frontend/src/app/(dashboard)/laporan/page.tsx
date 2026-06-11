@@ -224,22 +224,22 @@ export default function LaporanPage() {
         </div>
       </div>
 
-      <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl w-max mb-6">
+      <div className="flex flex-col sm:flex-row bg-gray-100 dark:bg-gray-800 p-1 rounded-xl w-full sm:w-max mb-6 gap-1">
         <button 
           onClick={() => setActiveReport("jimpitan")} 
-          className={`px-6 py-2.5 text-sm font-medium rounded-lg transition-all ${activeReport === 'jimpitan' ? 'bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'}`}
+          className={`px-6 py-2.5 text-sm font-medium rounded-lg transition-all whitespace-nowrap text-center sm:text-left ${activeReport === 'jimpitan' ? 'bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'}`}
         >
           Laporan Jimpitan
         </button>
         <button 
           onClick={() => setActiveReport("karangtaruna")} 
-          className={`px-6 py-2.5 text-sm font-medium rounded-lg transition-all ${activeReport === 'karangtaruna' ? 'bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'}`}
+          className={`px-6 py-2.5 text-sm font-medium rounded-lg transition-all whitespace-nowrap text-center sm:text-left ${activeReport === 'karangtaruna' ? 'bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'}`}
         >
           Laporan Kas Karangtaruna
         </button>
         <button 
           onClick={() => setActiveReport("warga")} 
-          className={`px-6 py-2.5 text-sm font-medium rounded-lg transition-all ${activeReport === 'warga' ? 'bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'}`}
+          className={`px-6 py-2.5 text-sm font-medium rounded-lg transition-all whitespace-nowrap text-center sm:text-left ${activeReport === 'warga' ? 'bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'}`}
         >
           Laporan Mingguan Warga
         </button>
