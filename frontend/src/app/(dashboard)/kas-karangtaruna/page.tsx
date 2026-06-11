@@ -8,6 +8,7 @@ type KasEntry = {
   saldoAkhir: number;
   uraian: string;
   tanggal: string | null;
+  createdAt: string | null;
   namaPetugas: string | null;
 };
 
@@ -18,6 +19,8 @@ export default function KasKarangtarunaPage() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ jenis: 'Masuk', nominal: '', uraian: '', tanggal: '' });
   const [filterWaktu, setFilterWaktu] = useState("Semua Waktu");
+  const [filterJenis, setFilterJenis] = useState("Semua");
+  const [sortTanggal, setSortTanggal] = useState<'none' | 'desc' | 'asc'>('none');
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [orgName, setOrgName] = useState("");
@@ -37,10 +40,52 @@ export default function KasKarangtarunaPage() {
     fetch('/api/auth/me').then(r => r.json()).then(d => { if(d && d.user) setPetugasId(d.user.id); }).catch(console.error);
   }, [fetchLedger]);
 
-  const saldoSekarang = ledger.length > 0 ? ledger[0].saldoAkhir : 0;
-  const now = new Date();
-  const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const masukBulanIni = ledger.filter(e => e.jenis === 'Masuk' && e.tanggal?.startsWith(monthPrefix)).reduce((s, e) => s + e.nominal, 0);
+  const totalPemasukan = ledger.filter(e => e.jenis === 'Masuk').reduce((s, e) => s + e.nominal, 0);
+  const totalPengeluaran = ledger.filter(e => e.jenis === 'Keluar').reduce((s, e) => s + e.nominal, 0);
+  const saldoSekarang = totalPemasukan - totalPengeluaran;
+
+  // Calculate dynamic running balance (always chronological by tanggal for correctness)
+  const chronologicalLedger = [...ledger].sort((a, b) => {
+    const dateA = new Date(a.tanggal || 0).getTime();
+    const dateB = new Date(b.tanggal || 0).getTime();
+    if (dateA === dateB) return a.id.localeCompare(b.id);
+    return dateA - dateB;
+  });
+
+  let currentBalance = 0;
+  const ledgerWithDynamicBalance = chronologicalLedger.map(item => {
+    if (item.jenis === 'Masuk') {
+      currentBalance += item.nominal;
+    } else if (item.jenis === 'Keluar') {
+      currentBalance -= item.nominal;
+    }
+    return { ...item, dynamicSaldo: currentBalance };
+  });
+
+  // Sort for display: default by createdAt (input time), or by tanggal if user toggled
+  const displayLedger = [...ledgerWithDynamicBalance].sort((a, b) => {
+    if (sortTanggal === 'none') {
+      // Default: sort by createdAt descending (newest input first)
+      const caA = new Date(a.createdAt || 0).getTime();
+      const caB = new Date(b.createdAt || 0).getTime();
+      if (caB === caA) return b.id.localeCompare(a.id);
+      return caB - caA;
+    } else {
+      // Sort by tanggal (transaction date)
+      const dateA = new Date(a.tanggal || 0).getTime();
+      const dateB = new Date(b.tanggal || 0).getTime();
+      if (dateA === dateB) return sortTanggal === 'desc' ? b.id.localeCompare(a.id) : a.id.localeCompare(b.id);
+      return sortTanggal === 'desc' ? dateB - dateA : dateA - dateB;
+    }
+  });
+
+  const cycleSortTanggal = () => {
+    setSortTanggal(prev => {
+      if (prev === 'none') return 'desc';
+      if (prev === 'desc') return 'asc';
+      return 'none';
+    });
+  };
 
   const handleSave = async () => {
     if (!form.nominal || !form.uraian) return;
@@ -89,18 +134,7 @@ export default function KasKarangtarunaPage() {
           <p className="text-gray-500 dark:text-gray-400 mt-1">Laporan arus kas utama organisasi {orgName ? `${orgName}` : ''}.</p>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-end gap-3">
-          <div className="flex items-center gap-3">
-            <select 
-              value={filterWaktu}
-              onChange={(e) => setFilterWaktu(e.target.value)}
-              className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white shadow-sm"
-            >
-              <option value="Semua Waktu">Semua Waktu</option>
-              <option value="Bulan Ini">Bulan Ini</option>
-              <option value="Bulan Lalu">Bulan Lalu</option>
-              <option value="Tahun Ini">Tahun Ini</option>
-              <option value="Rentang Kustom">Rentang Kustom</option>
-            </select>
+          <div className="flex flex-wrap items-center gap-3">
             <button onClick={() => {
               import('@/utils/exportToExcel').then(m => m.exportToExcel(ledger, 'Buku_Kas_Karangtaruna', 'Kas'));
             }} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2">
@@ -112,37 +146,83 @@ export default function KasKarangtarunaPage() {
               Catat Transaksi
             </button>
           </div>
-          
-          {filterWaktu === "Rentang Kustom" && (
-            <div className="flex items-center gap-2 animate-fade-in-up mt-2 sm:mt-0">
-              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white shadow-sm" />
-              <span className="text-gray-500">-</span>
-              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white shadow-sm" />
-            </div>
-          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl p-6 md:p-8 text-white shadow-lg shadow-emerald-500/20 flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/2 pointer-events-none"></div>
-          <div className="relative z-10 mb-4">
-            <p className="text-emerald-100 font-medium mb-1">Total Kas Karangtaruna Keseluruhan</p>
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">Rp {saldoSekarang.toLocaleString('id-ID')}</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 flex flex-col justify-center relative overflow-hidden transition-all hover:shadow-md">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+            <svg className="w-16 h-16 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
           </div>
-          <div className="relative z-10">
-            <p className="text-emerald-100 text-sm">Data realtime dari database</p>
-          </div>
+          <p className="text-gray-500 dark:text-gray-400 font-medium mb-1">Total Pemasukan</p>
+          <h2 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">+ Rp {totalPemasukan.toLocaleString('id-ID')}</h2>
+          <button 
+            onClick={() => setFilterJenis(filterJenis === 'Masuk' ? 'Semua' : 'Masuk')}
+            className={`text-left text-xs transition-colors hover:underline ${filterJenis === 'Masuk' ? 'text-emerald-600 font-bold dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}
+          >
+            {filterJenis === 'Masuk' ? 'Batalkan filter (Tampilkan semua)' : `Dari ${ledger.filter(e => e.jenis === 'Masuk').length} entri (Klik untuk filter)`}
+          </button>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 md:p-8 flex flex-col justify-center">
-          <p className="text-gray-500 dark:text-gray-400 font-medium mb-1">Total Saldo (Masuk) Bulan Ini</p>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">+ Rp {masukBulanIni.toLocaleString('id-ID')}</h2>
-          <p className="text-sm text-gray-500">{ledger.length} entri total</p>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 flex flex-col justify-center relative overflow-hidden transition-all hover:shadow-md">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+            <svg className="w-16 h-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
+          </div>
+          <p className="text-gray-500 dark:text-gray-400 font-medium mb-1">Total Pengeluaran</p>
+          <h2 className="text-3xl font-bold text-red-600 dark:text-red-400 mb-2">- Rp {totalPengeluaran.toLocaleString('id-ID')}</h2>
+          <button 
+            onClick={() => setFilterJenis(filterJenis === 'Keluar' ? 'Semua' : 'Keluar')}
+            className={`text-left text-xs transition-colors hover:underline ${filterJenis === 'Keluar' ? 'text-red-600 font-bold dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}
+          >
+            {filterJenis === 'Keluar' ? 'Batalkan filter (Tampilkan semua)' : `Dari ${ledger.filter(e => e.jenis === 'Keluar').length} entri (Klik untuk filter)`}
+          </button>
+        </div>
+
+        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-lg shadow-emerald-500/20 flex flex-col justify-center relative overflow-hidden transition-all hover:shadow-xl">
+          <div className="absolute right-0 top-0 w-48 h-48 bg-white/10 rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/2 pointer-events-none"></div>
+          <div className="relative z-10 mb-2">
+            <p className="text-emerald-100 font-medium mb-1">Total Kas Keseluruhan</p>
+            <h2 className="text-3xl font-bold tracking-tight">Rp {saldoSekarang.toLocaleString('id-ID')}</h2>
+          </div>
+          <div className="relative z-10">
+            <button 
+              onClick={() => setFilterJenis('Semua')}
+              className={`text-left text-xs transition-colors hover:underline ${filterJenis === 'Semua' ? 'text-white font-bold' : 'text-emerald-100'}`}
+            >
+              {filterJenis === 'Semua' ? 'Menampilkan semua transaksi' : 'Klik untuk menampilkan semua transaksi'}
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50 dark:bg-gray-900/50">
+          <h2 className="font-semibold text-gray-900 dark:text-white">Riwayat Transaksi</h2>
+          <div className="flex flex-col sm:flex-row items-end gap-3">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter:</label>
+              <select 
+                value={filterWaktu}
+                onChange={(e) => setFilterWaktu(e.target.value)}
+                className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white shadow-sm"
+              >
+                <option value="Semua Waktu">Semua Waktu</option>
+                <option value="Bulan Ini">Bulan Ini</option>
+                <option value="Bulan Lalu">Bulan Lalu</option>
+                <option value="Tahun Ini">Tahun Ini</option>
+                <option value="Rentang Kustom">Rentang Kustom</option>
+              </select>
+            </div>
+            
+            {filterWaktu === "Rentang Kustom" && (
+              <div className="flex items-center gap-2 animate-fade-in-up mt-2 sm:mt-0">
+                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white shadow-sm" />
+                <span className="text-gray-500">-</span>
+                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white shadow-sm" />
+              </div>
+            )}
+          </div>
+        </div>
         {loading ? (
           <div className="p-12 text-center text-gray-400">
             <svg className="w-8 h-8 animate-spin mx-auto mb-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
@@ -153,16 +233,31 @@ export default function KasKarangtarunaPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
-                  <th className="py-4 px-6 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tanggal</th>
-                  <th className="py-4 px-6 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Uraian Keterangan</th>
-                  <th className="py-4 px-6 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Petugas</th>
-                  <th className="py-4 px-6 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Masuk (Debit)</th>
-                  <th className="py-4 px-6 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Keluar (Kredit)</th>
-                  <th className="py-4 px-6 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Saldo Akhir</th>
+                  <th className="py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <button onClick={cycleSortTanggal} className="inline-flex items-center gap-1 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors group">
+                      Tanggal
+                      <span className="inline-flex flex-col leading-none">
+                        <svg className={`w-2.5 h-2.5 ${sortTanggal === 'asc' ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-300 dark:text-gray-600 group-hover:text-gray-400'}`} viewBox="0 0 10 6" fill="currentColor"><path d="M5 0L10 6H0z"/></svg>
+                        <svg className={`w-2.5 h-2.5 ${sortTanggal === 'desc' ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-300 dark:text-gray-600 group-hover:text-gray-400'}`} viewBox="0 0 10 6" fill="currentColor"><path d="M5 6L0 0h10z"/></svg>
+                      </span>
+                      {sortTanggal === 'none' && <span className="text-[8px] sm:text-[9px] text-gray-400 font-normal normal-case">(input)</span>}
+                    </button>
+                  </th>
+                  <th className="py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Uraian</th>
+                  <th className="hidden sm:table-cell py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Petugas</th>
+                  {/* Mobile: single Nominal column */}
+                  <th className="sm:hidden py-2 px-3 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Nominal</th>
+                  {/* Desktop: separate Pemasukan & Pengeluaran */}
+                  <th className="hidden sm:table-cell py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Pemasukan</th>
+                  <th className="hidden sm:table-cell py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Pengeluaran</th>
+                  {sortTanggal !== 'none' && (
+                    <th className="hidden sm:table-cell py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Saldo Akhir</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {ledger.filter(item => {
+                {displayLedger.filter(item => {
+                  if (filterJenis !== 'Semua' && item.jenis !== filterJenis) return false;
                   if (filterWaktu === "Semua Waktu") return true;
                   if (!item.tanggal) return false;
                   const d = new Date(item.tanggal);
@@ -182,20 +277,29 @@ export default function KasKarangtarunaPage() {
                   return true;
                 }).map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                    <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">{item.tanggal}</td>
-                    <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">{item.uraian}</td>
-                    <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-300">{item.namaPetugas || '-'}</td>
-                    <td className="py-4 px-6 text-right font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                    <td className="py-2 px-3 sm:py-4 sm:px-6 text-xs sm:text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">{item.tanggal?.slice(0, 10) || '-'}</td>
+                    <td className="py-2 px-3 sm:py-4 sm:px-6 text-xs sm:text-sm font-medium text-gray-900 dark:text-white">{item.uraian}</td>
+                    <td className="hidden sm:table-cell py-2 px-3 sm:py-4 sm:px-6 text-xs sm:text-sm text-gray-600 dark:text-gray-300">{item.namaPetugas || '-'}</td>
+                    {/* Mobile: single Nominal column with color */}
+                    <td className="sm:hidden py-2 px-3 text-right text-xs font-semibold whitespace-nowrap">
+                      <span className={item.jenis === 'Masuk' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
+                        {item.jenis === 'Masuk' ? '+' : '-'} Rp {item.nominal.toLocaleString('id-ID')}
+                      </span>
+                    </td>
+                    {/* Desktop: separate columns */}
+                    <td className="hidden sm:table-cell py-2 px-3 sm:py-4 sm:px-6 text-right text-xs sm:text-sm font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                       {item.jenis === 'Masuk' ? `Rp ${item.nominal.toLocaleString('id-ID')}` : <span className="text-gray-300 dark:text-gray-600">-</span>}
                     </td>
-                    <td className="py-4 px-6 text-right font-medium text-red-600 dark:text-red-400 whitespace-nowrap">
+                    <td className="hidden sm:table-cell py-2 px-3 sm:py-4 sm:px-6 text-right text-xs sm:text-sm font-medium text-red-600 dark:text-red-400 whitespace-nowrap">
                       {item.jenis === 'Keluar' ? `Rp ${item.nominal.toLocaleString('id-ID')}` : <span className="text-gray-300 dark:text-gray-600">-</span>}
                     </td>
-                    <td className="py-4 px-6 text-right font-bold text-gray-900 dark:text-white whitespace-nowrap">Rp {item.saldoAkhir.toLocaleString('id-ID')}</td>
+                    {sortTanggal !== 'none' && (
+                      <td className="hidden sm:table-cell py-2 px-3 sm:py-4 sm:px-6 text-right text-xs sm:text-sm font-bold text-gray-900 dark:text-white whitespace-nowrap">Rp {item.dynamicSaldo.toLocaleString('id-ID')}</td>
+                    )}
                   </tr>
                 ))}
                 {ledger.length === 0 && (
-                  <tr><td colSpan={6} className="py-8 text-center text-gray-400">Belum ada entri kas.</td></tr>
+                  <tr><td colSpan={sortTanggal !== 'none' ? 6 : 5} className="py-8 text-center text-gray-400">Belum ada entri kas.</td></tr>
                 )}
               </tbody>
             </table>

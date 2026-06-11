@@ -210,22 +210,37 @@ export default function PengaturanPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="py-3 px-4 text-xs font-medium text-gray-500 uppercase">Nomor RT</th>
-                  <th className="py-3 px-4 text-xs font-medium text-gray-500 uppercase">Ketua RT</th>
-                  <th className="py-3 px-4 text-xs font-medium text-gray-500 uppercase">Jumlah KK</th>
-                  <th className="py-3 px-4 text-xs font-medium text-gray-500 uppercase text-right">Aksi</th>
+                <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+                  <th className="py-2 px-4 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Lingkungan</th>
+                  <th className="hidden sm:table-cell py-2 px-4 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ketua RT</th>
+                  <th className="py-2 px-4 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jumlah KK</th>
+                  <th className="py-2 px-4 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {rtList.map(r => (
-                  <tr key={r.id}>
-                    <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">RT {r.nomor}</td>
-                    <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{r.ketuaRt || '-'}</td>
-                    <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{r.jumlahKk} KK</td>
-                    <td className="py-3 px-4 text-right">
-                      <button onClick={() => openEditRt(r)} className="text-blue-600 hover:text-blue-800 mr-3 text-sm font-medium">Edit</button>
-                      <button onClick={() => handleDeleteRt(r.id)} className="text-red-600 hover:text-red-800 text-sm font-medium">Hapus</button>
+                  <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td className="py-3 px-4 sm:px-6">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400 font-bold shadow-inner">
+                          {r.nomor}
+                        </div>
+                        <div className="flex flex-col sm:hidden">
+                          <span className="font-bold text-gray-900 dark:text-white">RT {r.nomor}</span>
+                          <span className="text-[10px] text-gray-500">{r.ketuaRt || 'Belum ada ketua'}</span>
+                        </div>
+                        <div className="hidden sm:block font-bold text-gray-900 dark:text-white">RT {r.nomor}</div>
+                      </div>
+                    </td>
+                    <td className="hidden sm:table-cell py-3 px-4 sm:px-6 text-sm text-gray-600 dark:text-gray-300 font-medium">{r.ketuaRt || '-'}</td>
+                    <td className="py-3 px-4 sm:px-6 text-sm">
+                      <span className="font-bold text-gray-900 dark:text-white">{r.jumlahKk}</span> <span className="text-gray-500 text-[10px] font-medium">KK</span>
+                    </td>
+                    <td className="py-3 px-4 sm:px-6 text-right whitespace-nowrap">
+                       <div className="flex justify-end items-center gap-1">
+                         <button title="Edit" onClick={() => openEditRt(r)} className="p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                         <button title="Hapus" onClick={() => handleDeleteRt(r.id)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                       </div>
                     </td>
                   </tr>
                 ))}
@@ -246,32 +261,47 @@ export default function PengaturanPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="py-3 px-4 text-xs font-medium text-gray-500 uppercase">Nama Lengkap</th>
-                  <th className="py-3 px-4 text-xs font-medium text-gray-500 uppercase">Email</th>
-                  <th className="py-3 px-4 text-xs font-medium text-gray-500 uppercase">Role / Akses</th>
-                  <th className="py-3 px-4 text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="py-3 px-4 text-xs font-medium text-gray-500 uppercase text-right">Aksi</th>
+                <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+                  <th className="py-2 px-4 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pengguna</th>
+                  <th className="hidden sm:table-cell py-2 px-4 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role / Akses</th>
+                  <th className="py-2 px-4 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                  <th className="py-2 px-4 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {userList.map(u => (
-                  <tr key={u.id}>
-                    <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">{u.name}</td>
-                    <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{u.email}</td>
-                    <td className="py-3 px-4"><span className={`px-2 py-1 text-xs rounded font-medium ${roleColors[u.role] || 'bg-gray-100 text-gray-800'}`}>{u.role}</span></td>
-                    <td className="py-3 px-4">
+                  <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td className="py-3 px-4 sm:px-6">
+                      <div className="flex items-center gap-3">
+                        <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 font-bold shadow-inner uppercase">
+                          {u.name.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white">{u.name}</div>
+                          <div className="text-[10px] sm:text-xs text-gray-500 mt-0.5">{u.email}</div>
+                          <div className="sm:hidden mt-1 flex gap-2">
+                            <span className={`px-2 py-0.5 text-[10px] rounded font-medium border shadow-sm ${roleColors[u.role] || 'bg-gray-100 text-gray-800'}`.replace('bg-', 'border-').replace('100', '200') + ` ${roleColors[u.role]}`}>{u.role}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="hidden sm:table-cell py-3 px-4 sm:px-6">
+                      <span className={`px-2.5 py-1 text-xs rounded-lg font-medium border shadow-sm ${roleColors[u.role] || 'bg-gray-100 text-gray-800 border-gray-200'}`.replace('bg-', 'border-').replace('100', '200') + ` ${roleColors[u.role]}`}>{u.role}</span>
+                    </td>
+                    <td className="py-3 px-4 sm:px-6">
                       {u.isActive !== false ? 
-                        <span className="px-2 py-1 text-xs rounded font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">Active</span> : 
-                        <span className="px-2 py-1 text-xs rounded font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">Pending</span>
+                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500 animate-[pulse_2s_ease-in-out_infinite]"></span><span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Aktif</span></div> : 
+                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500"></span><span className="text-xs font-medium text-red-700 dark:text-red-400">Nonaktif</span></div>
                       }
                     </td>
-                    <td className="py-3 px-4 text-right">
-                      {currentUserRole === 'Super Admin' && (
-                        <button onClick={() => handleImpersonate(u.email)} className="text-emerald-600 hover:text-emerald-800 mr-3 text-sm font-medium">Login as</button>
-                      )}
-                      <button onClick={() => openEditUser(u)} className="text-blue-600 hover:text-blue-800 mr-3 text-sm font-medium">Edit</button>
-                      <button onClick={() => handleDeleteUser(u.id)} className="text-red-600 hover:text-red-800 text-sm font-medium">Hapus</button>
+                    <td className="py-3 px-4 sm:px-6 text-right whitespace-nowrap">
+                      <div className="flex justify-end items-center gap-1">
+                        {currentUserRole === 'Super Admin' && (
+                          <button title="Login sebagai pengguna ini" onClick={() => handleImpersonate(u.email)} className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg></button>
+                        )}
+                        <button title="Edit" onClick={() => openEditUser(u)} className="p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                        <button title="Hapus" onClick={() => handleDeleteUser(u.id)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                      </div>
                     </td>
                   </tr>
                 ))}

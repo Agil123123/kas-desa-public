@@ -323,30 +323,40 @@ export default function LaporanPage() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-gray-50 dark:bg-gray-900/50">
-                      <th className="py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b dark:border-gray-700">Waktu</th>
-                      <th className="py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b dark:border-gray-700">Uraian</th>
-                      <th className="py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b dark:border-gray-700 text-right">Masuk</th>
-                      <th className="py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b dark:border-gray-700 text-right">Keluar</th>
-                      <th className="py-3 px-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b dark:border-gray-700 text-right">Saldo Akhir</th>
+                      <th className="py-2 px-3 sm:py-3 sm:px-4 text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b dark:border-gray-700">Waktu</th>
+                      <th className="py-2 px-3 sm:py-3 sm:px-4 text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b dark:border-gray-700">Uraian</th>
+                      {/* Mobile Nominal */}
+                      <th className="sm:hidden py-2 px-3 text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b dark:border-gray-700 text-right">Nominal</th>
+                      {/* Desktop Masuk/Keluar */}
+                      <th className="hidden sm:table-cell py-2 px-3 sm:py-3 sm:px-4 text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b dark:border-gray-700 text-right">Masuk</th>
+                      <th className="hidden sm:table-cell py-2 px-3 sm:py-3 sm:px-4 text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b dark:border-gray-700 text-right">Keluar</th>
+                      <th className="hidden sm:table-cell py-2 px-3 sm:py-3 sm:px-4 text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b dark:border-gray-700 text-right">Saldo Akhir</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                     {filteredLedger.map((item) => (
                       <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">{item.tanggal ? item.tanggal.slice(0, 10) : '-'}</td>
-                        <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">{item.uraian}</td>
-                        <td className="py-3 px-4 text-right font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                        <td className="py-2 px-3 sm:py-3 sm:px-4 text-[10px] sm:text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">{item.tanggal ? item.tanggal.slice(0, 10) : '-'}</td>
+                        <td className="py-2 px-3 sm:py-3 sm:px-4 text-xs sm:text-sm font-medium text-gray-900 dark:text-white">{item.uraian}</td>
+                        {/* Mobile Nominal */}
+                        <td className="sm:hidden py-2 px-3 text-right text-[10px] font-semibold whitespace-nowrap">
+                          <span className={item.jenis === 'Masuk' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
+                            {item.jenis === 'Masuk' ? '+' : '-'} Rp {item.nominal.toLocaleString('id-ID')}
+                          </span>
+                        </td>
+                        {/* Desktop Masuk/Keluar */}
+                        <td className="hidden sm:table-cell py-2 px-3 sm:py-3 sm:px-4 text-right text-xs sm:text-sm font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                           {item.jenis === 'Masuk' ? `+ Rp ${item.nominal.toLocaleString('id-ID')}` : '-'}
                         </td>
-                        <td className="py-3 px-4 text-right font-medium text-red-600 dark:text-red-400 whitespace-nowrap">
+                        <td className="hidden sm:table-cell py-2 px-3 sm:py-3 sm:px-4 text-right text-xs sm:text-sm font-medium text-red-600 dark:text-red-400 whitespace-nowrap">
                           {item.jenis === 'Keluar' ? `- Rp ${item.nominal.toLocaleString('id-ID')}` : '-'}
                         </td>
-                        <td className="py-3 px-4 text-right font-bold text-gray-900 dark:text-white whitespace-nowrap">Rp {item.saldoAkhir.toLocaleString('id-ID')}</td>
+                        <td className="hidden sm:table-cell py-2 px-3 sm:py-3 sm:px-4 text-right text-xs sm:text-sm font-bold text-gray-900 dark:text-white whitespace-nowrap">Rp {item.saldoAkhir.toLocaleString('id-ID')}</td>
                       </tr>
                     ))}
                     {filteredLedger.length === 0 && (
                       <tr>
-                        <td colSpan={5} className="py-8 text-center text-gray-400">
+                        <td colSpan={6} className="py-8 text-center text-gray-400 text-sm">
                           {ledger.length === 0 ? 'Belum ada data riwayat transaksi kas.' : 'Tidak ada transaksi pada rentang waktu tersebut.'}
                         </td>
                       </tr>

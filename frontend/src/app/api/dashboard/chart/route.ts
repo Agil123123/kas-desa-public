@@ -1,12 +1,21 @@
 import { NextResponse } from 'next/server';
-import { db, kasKarangtaruna } from '@kas/backend';
+import { db, kasKarangtaruna, transaksi } from '@kas/backend';
+import { sql } from 'drizzle-orm';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const filter = searchParams.get('filter') || '8 Minggu';
+    const type = searchParams.get('type') || 'karangtaruna';
 
-    const allKas = await db.select().from(kasKarangtaruna);
+    let rawData: any[] = [];
+
+    if (type === 'jimpitan') {
+      rawData = await db.select().from(transaksi).where(sql`kategori = 'Kas Jimpitan' AND (jenis = 'Masuk' OR jenis IS NULL)`);
+    } else {
+      rawData = await db.select().from(kasKarangtaruna).where(sql`jenis = 'Masuk'`);
+    }
+
     const now = new Date();
     
     // Grouping helper
@@ -14,7 +23,6 @@ export async function GET(request: Request) {
     
     if (filter === '1 Minggu') {
       const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-      const currentDay = now.getDay();
       
       for (let i = 6; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
@@ -23,11 +31,9 @@ export async function GET(request: Request) {
         const endOfDay = startOfDay + 86400000;
         
         let amount = 0;
-        allKas.forEach(k => {
-          if (k.jenis === 'Masuk') {
-            const time = new Date(k.tanggal || 0).getTime();
-            if (time >= startOfDay && time < endOfDay) amount += k.nominal;
-          }
+        rawData.forEach(k => {
+          const time = new Date(k.tanggal || 0).getTime();
+          if (time >= startOfDay && time < endOfDay) amount += k.nominal;
         });
         
         result.push({ name: dayName, amount });
@@ -41,11 +47,9 @@ export async function GET(request: Request) {
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 1).getTime();
         
         let amount = 0;
-        allKas.forEach(k => {
-          if (k.jenis === 'Masuk') {
-            const time = new Date(k.tanggal || 0).getTime();
-            if (time >= startOfMonth && time < endOfMonth) amount += k.nominal;
-          }
+        rawData.forEach(k => {
+          const time = new Date(k.tanggal || 0).getTime();
+          if (time >= startOfMonth && time < endOfMonth) amount += k.nominal;
         });
         
         result.push({ name: monthName, amount });
@@ -58,11 +62,9 @@ export async function GET(request: Request) {
         const endOfWeek = startOfWeek + (7 * 86400000);
         
         let amount = 0;
-        allKas.forEach(k => {
-          if (k.jenis === 'Masuk') {
-            const time = new Date(k.tanggal || 0).getTime();
-            if (time >= startOfWeek && time < endOfWeek) amount += k.nominal;
-          }
+        rawData.forEach(k => {
+          const time = new Date(k.tanggal || 0).getTime();
+          if (time >= startOfWeek && time < endOfWeek) amount += k.nominal;
         });
         
         result.push({ name: `Mg ${weeksCount - i}`, amount });

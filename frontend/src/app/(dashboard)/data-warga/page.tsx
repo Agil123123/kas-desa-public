@@ -113,7 +113,7 @@ export default function DataWargaPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Data Warga (Peserta Jimpitan)</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Manajemen data rumah tangga peserta jimpitan.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => window.open(`/data-warga/cetak-qr?rt=${activeTab}`, '_blank')}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2 print:hidden"
@@ -148,38 +148,52 @@ export default function DataWargaPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50 dark:bg-gray-900/50">
-                  <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nama Warga / KK</th>
-                  <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">RT</th>
-                  <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jimpitan (Mg Ini)</th>
-                  <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jimpitan (Bln Ini)</th>
-                  <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kode QR</th>
-                  <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Aksi</th>
+                <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+                  <th className="py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Warga</th>
+                  <th className="hidden sm:table-cell py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">RT</th>
+                  <th className="py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jimpitan</th>
+                  <th className="hidden md:table-cell py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kode QR</th>
+                  <th className="py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {filteredWarga.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td className="py-3 px-6 font-medium text-gray-900 dark:text-white">
-                      {item.namaKk}
-                      {item.nik && !item.nik.startsWith('NO-NIK') && <div className="text-xs text-gray-500 font-mono mt-0.5">{item.nik}</div>}
-                    </td>
-                    <td className="py-3 px-6 text-gray-500 dark:text-gray-400">{item.rt}</td>
-                    <td className="py-3 px-6 font-medium text-emerald-600 dark:text-emerald-400">
-                      Rp {(item.jimpitanMingguIni || 0).toLocaleString('id-ID')}
-                    </td>
-                    <td className="py-3 px-6 font-medium text-blue-600 dark:text-blue-400">
-                      Rp {(item.jimpitanBulanIni || 0).toLocaleString('id-ID')}
-                    </td>
-                    <td className="py-3 px-6">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 text-xs rounded font-mono">{item.kodeUnik}</span>
-                        <button onClick={() => setQrModal(item)} className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium underline">Lihat QR</button>
+                  <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td className="py-3 px-3 sm:py-4 sm:px-6">
+                      <div className="flex items-center gap-3">
+                        <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400 font-bold shadow-inner">
+                          {item.namaKk.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white">{item.namaKk}</div>
+                          <div className="text-[10px] sm:text-xs text-gray-500 flex items-center gap-2 mt-0.5">
+                            <span className="sm:hidden font-medium text-emerald-600 dark:text-emerald-400">RT {item.rt}</span>
+                            {item.nik && !item.nik.startsWith('NO-NIK') ? <span className="font-mono text-gray-400">{item.nik}</span> : null}
+                          </div>
+                        </div>
                       </div>
                     </td>
-                    <td className="py-3 px-6 text-center">
-                      <button onClick={() => openEdit(item)} className="text-emerald-600 hover:text-emerald-700 font-medium text-sm mr-3">Edit</button>
-                      <button onClick={() => handleDelete(item.id)} className="text-red-600 hover:text-red-700 font-medium text-sm">Hapus</button>
+                    <td className="hidden sm:table-cell py-3 px-3 sm:py-4 sm:px-6">
+                      <span className="px-2.5 py-1 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-lg font-medium text-xs">RT {item.rt}</span>
+                    </td>
+                    <td className="py-3 px-3 sm:py-4 sm:px-6">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400">Rp {(item.jimpitanMingguIni || 0).toLocaleString('id-ID')} <span className="text-[10px] text-gray-400 font-normal">/mg</span></span>
+                        <span className="text-[10px] sm:text-xs font-medium text-blue-600 dark:text-blue-400">Rp {(item.jimpitanBulanIni || 0).toLocaleString('id-ID')} <span className="text-[10px] text-gray-400 font-normal">/bln</span></span>
+                      </div>
+                    </td>
+                    <td className="hidden md:table-cell py-3 px-3 sm:py-4 sm:px-6">
+                      <button onClick={() => setQrModal(item)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 rounded-lg text-xs font-medium transition-colors shadow-sm">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
+                        {item.kodeUnik}
+                      </button>
+                    </td>
+                    <td className="py-3 px-3 sm:py-4 sm:px-6 text-right whitespace-nowrap">
+                       <div className="flex justify-end items-center gap-1">
+                         <button title="Lihat QR" onClick={() => setQrModal(item)} className="md:hidden p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg></button>
+                         <button title="Edit" onClick={() => openEdit(item)} className="p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                         <button title="Hapus" onClick={() => handleDelete(item.id)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                       </div>
                     </td>
                   </tr>
                 ))}
@@ -258,6 +272,10 @@ export default function DataWargaPage() {
               <button onClick={downloadQR} className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-lg shadow-blue-500/30 flex justify-center items-center gap-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                 Download QR Code (SVG)
+              </button>
+              <button onClick={() => setQrModal(null)} className="w-full py-3 px-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-xl transition-colors flex justify-center items-center gap-2 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                Tutup
               </button>
             </div>
           </div>

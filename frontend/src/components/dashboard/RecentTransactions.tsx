@@ -32,9 +32,9 @@ export default function RecentTransactions() {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden h-full flex flex-col">
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+      <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white">Transaksi Terakhir</h2>
-        <Link href="/riwayat-transaksi" className="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 text-sm font-medium">Lihat Semua</Link>
+        <Link href="/riwayat-transaksi" className="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 text-xs sm:text-sm font-medium">Lihat Semua</Link>
       </div>
       <div className="overflow-x-auto flex-1">
         {loading ? (
@@ -42,31 +42,34 @@ export default function RecentTransactions() {
         ) : (
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50 dark:bg-gray-900/50">
-                <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Anggota / Keterangan</th>
-                <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kategori</th>
-                <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tanggal & Waktu</th>
-                <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nominal</th>
+              <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+                <th className="py-2 px-3 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Anggota / Keterangan</th>
+                <th className="hidden sm:table-cell py-2 px-3 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kategori</th>
+                <th className="py-2 px-3 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tanggal & Waktu</th>
+                <th className="py-2 px-3 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Nominal</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {transactions.map((trx, index) => (
                 <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                  <td className="py-3 px-6 whitespace-nowrap">
-                    <div className="font-medium text-gray-900 dark:text-white">{trx.kategori === 'Kas Jimpitan' ? (trx.namaWarga || 'Warga') : trx.uraian}</div>
-                    <div className="text-xs text-gray-500">
+                  <td className="py-2 px-3 sm:py-3 sm:px-6 whitespace-nowrap">
+                    <div className="font-medium text-xs sm:text-sm text-gray-900 dark:text-white">{trx.kategori === 'Kas Jimpitan' ? (trx.namaWarga || 'Warga') : trx.uraian}</div>
+                    <div className="text-[10px] sm:text-xs text-gray-500 mt-0.5">
+                      <span className={`sm:hidden font-bold mr-1.5 ${trx.kategori === 'Kas Jimpitan' ? 'text-blue-600 dark:text-blue-400' : 'text-purple-600 dark:text-purple-400'}`}>
+                        {trx.kategori === 'Kas Jimpitan' ? 'JMP' : 'KAS'}
+                      </span>
                       {trx.kategori === 'Kas Jimpitan' ? (trx.rtWarga ? `RT ${trx.rtWarga}` : 'Tanpa RT') : (trx.jenis === 'Masuk' ? 'Pemasukan' : 'Pengeluaran')}
                     </div>
                   </td>
-                  <td className="py-3 px-6 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                    <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${
+                  <td className="hidden sm:table-cell py-2 px-3 sm:py-3 sm:px-6 text-xs sm:text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                    <span className={`px-2.5 py-1 text-[10px] sm:text-xs font-medium rounded-md ${
                       trx.kategori === 'Kas Jimpitan' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400' : 'bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400'
                     }`}>
                       {trx.kategori}
                     </span>
                   </td>
-                  <td className="py-3 px-6 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{trx.tanggal}</td>
-                  <td className="py-3 px-6 text-sm font-medium whitespace-nowrap">
+                  <td className="py-2 px-3 sm:py-3 sm:px-6 text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{trx.tanggal?.slice(0, 10) || '-'}</td>
+                  <td className="py-2 px-3 sm:py-3 sm:px-6 text-xs sm:text-sm font-medium whitespace-nowrap text-right">
                     <span className={trx.jenis === 'Masuk' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
                       {trx.jenis === 'Masuk' ? '+' : '-'} Rp {trx.nominal.toLocaleString('id-ID')}
                     </span>

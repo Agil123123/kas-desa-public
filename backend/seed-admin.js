@@ -1,9 +1,12 @@
 const { createClient } = require('@libsql/client');
 const bcrypt = require('bcryptjs');
 
+const path = require('path');
+
 async function seedAdmin() {
+  const dbPath = path.join(__dirname, 'sqlite.db');
   const client = createClient({
-    url: process.env.DATABASE_URL,
+    url: process.env.DATABASE_URL || `file:${dbPath}`,
     authToken: process.env.DATABASE_AUTH_TOKEN,
   });
 

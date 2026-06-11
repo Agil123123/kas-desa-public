@@ -11,12 +11,13 @@ export async function GET() {
       saldoAkhir: kasKarangtaruna.saldoAkhir,
       uraian: kasKarangtaruna.uraian,
       tanggal: kasKarangtaruna.tanggal,
+      createdAt: kasKarangtaruna.createdAt,
       namaPetugas: users.name,
     })
     .from(kasKarangtaruna)
     .leftJoin(transaksi, eq(kasKarangtaruna.transaksiId, transaksi.id))
     .leftJoin(users, eq(transaksi.petugasId, users.id))
-    .orderBy(desc(kasKarangtaruna.tanggal));
+    .orderBy(desc(kasKarangtaruna.createdAt));
 
     return NextResponse.json(data);
   } catch (error: any) {
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
     const id = `kr-${Date.now()}`;
 
     // Get last saldo
-    const lastEntry = await db.select().from(kasKarangtaruna).orderBy(desc(kasKarangtaruna.tanggal)).limit(1);
+    const lastEntry = await db.select().from(kasKarangtaruna).orderBy(desc(kasKarangtaruna.createdAt)).limit(1);
     const lastSaldo = lastEntry.length > 0 ? lastEntry[0].saldoAkhir : 0;
     const newSaldo = body.jenis === 'Masuk'
       ? lastSaldo + body.nominal
@@ -54,4 +55,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Terjadi kesalahan internal pada server' }, { status: 500 });
   }
 }
-

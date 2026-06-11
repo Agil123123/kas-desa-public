@@ -2,16 +2,24 @@
 import { useState, useEffect } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-export default function RevenueChart() {
+export default function RevenueChart({ title = "Tren Pemasukan", type = "karangtaruna" }: { title?: string, type?: "karangtaruna" | "jimpitan" }) {
   const [filter, setFilter] = useState("8 Minggu");
   const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/dashboard/chart?filter=${filter}`)
+    setLoading(true);
+    fetch(`/api/dashboard/chart?filter=${filter}&type=${type}`)
       .then(res => res.json())
-      .then(setData)
-      .catch(console.error);
-  }, [filter]);
+      .then(resData => {
+        setData(resData);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, [filter, type]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -27,11 +35,14 @@ export default function RevenueChart() {
     return null;
   };
 
+  const gradientColor = type === "karangtaruna" ? "#10b981" : "#3b82f6";
+  const gradientId = `colorAmount-${type}`;
+
   return (
-    <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-gray-700 shadow-sm hover:shadow-[0_8px_30px_rgba(16,185,129,0.08)] transition-all duration-300 h-full flex flex-col">
-      <div className="flex justify-between items-center mb-6">
+    <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
         <div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Tren Pemasukan</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">Periode: {filter}</p>
         </div>
         <select 
@@ -46,16 +57,21 @@ export default function RevenueChart() {
         </select>
       </div>
       
-      <div className="flex-1 w-full h-64 mt-4">
+      <div className="w-full h-72 mt-4 relative">
+        {loading ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-gray-800/50 z-10 rounded-xl">
+            <svg className="w-8 h-8 animate-spin text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+          </div>
+        ) : null}
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={data}
             margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
           >
             <defs>
-              <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
-                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={gradientColor} stopOpacity={0.4}/>
+                <stop offset="95%" stopColor={gradientColor} stopOpacity={0}/>
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" className="dark:opacity-20" />
@@ -72,15 +88,15 @@ export default function RevenueChart() {
               tick={{ fill: '#9ca3af', fontSize: 12 }}
               tickFormatter={(value) => `Rp ${value >= 1000000 ? (value / 1000000) + 'M' : (value / 1000) + 'K'}`}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#10b981', strokeWidth: 1, strokeDasharray: '4 4', fill: 'transparent' }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: gradientColor, strokeWidth: 1, strokeDasharray: '4 4', fill: 'transparent' }} />
             <Area 
               type="monotone" 
               dataKey="amount" 
-              stroke="#10b981" 
+              stroke={gradientColor} 
               strokeWidth={3}
               fillOpacity={1} 
-              fill="url(#colorAmount)" 
-              activeDot={{ r: 6, fill: '#10b981', stroke: '#ffffff', strokeWidth: 2 }}
+              fill={`url(#${gradientId})`} 
+              activeDot={{ r: 6, fill: gradientColor, stroke: '#ffffff', strokeWidth: 2 }}
               animationDuration={1500}
             />
           </AreaChart>

@@ -21,7 +21,7 @@ export default function TargetProgress() {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm h-full flex flex-col justify-center">
-      <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Pencapaian Target Bulan Ini</h2>
+      <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Pencapaian Target Jimpitan Bulan Ini</h2>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Target jimpitan: Rp {target.toLocaleString('id-ID')}</p>
       
       <div className="relative mb-4">

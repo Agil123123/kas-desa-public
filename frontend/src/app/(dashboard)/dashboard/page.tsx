@@ -22,16 +22,19 @@ export default function DashboardPage() {
 
       <MetricCards />
       
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <RevenueChart title="Tren Pemasukan Kas Karangtaruna" type="karangtaruna" />
+        <RevenueChart title="Tren Pemasukan Kas Jimpitan" type="jimpitan" />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="lg:col-span-2">
-          <RevenueChart />
+          <RecentTransactions />
         </div>
         <div>
           <TargetProgress />
         </div>
       </div>
-      
-      <RecentTransactions />
     </div>
   );
 }

@@ -111,25 +111,44 @@ export default function AnggotaKarangtarunaPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50 dark:bg-gray-900/50">
-                  <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nama Lengkap</th>
-                  <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jabatan</th>
-                  <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">RT / Wilayah</th>
+                <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+                  <th className="py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Anggota</th>
+                  <th className="hidden sm:table-cell py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jabatan</th>
+                  <th className="hidden md:table-cell py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">RT / Wilayah</th>
                   {(userRole === 'Super Admin' || userRole === 'Admin') && (
-                    <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Aksi</th>
+                    <th className="py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Aksi</th>
                   )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {anggotaList.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td className="py-3 px-6 font-medium text-gray-900 dark:text-white">{item.nama}</td>
-                    <td className="py-3 px-6"><span className="px-2.5 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">{item.jabatan}</span></td>
-                    <td className="py-3 px-6 text-gray-500 dark:text-gray-400">{item.rt || '-'}</td>
+                  <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td className="py-3 px-3 sm:py-4 sm:px-6">
+                      <div className="flex items-center gap-3">
+                        <div className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400 font-bold shadow-inner">
+                          {item.nama.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white">{item.nama}</div>
+                          <div className="text-[10px] sm:text-xs text-gray-500 flex flex-wrap items-center gap-1.5 mt-0.5 sm:hidden">
+                            <span className="font-medium text-blue-600 dark:text-blue-400">{item.jabatan}</span>
+                            {item.rt && <span className="text-gray-400">• RT {item.rt}</span>}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="hidden sm:table-cell py-3 px-3 sm:py-4 sm:px-6">
+                      <span className="px-2.5 py-1 text-xs font-medium rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-100 dark:border-blue-800 shadow-sm">{item.jabatan}</span>
+                    </td>
+                    <td className="hidden md:table-cell py-3 px-3 sm:py-4 sm:px-6 text-sm text-gray-600 dark:text-gray-400">
+                      {item.rt ? `RT ${item.rt}` : '-'}
+                    </td>
                     {(userRole === 'Super Admin' || userRole === 'Admin') && (
-                      <td className="py-3 px-6 text-center">
-                        <button onClick={() => openEdit(item)} className="text-emerald-600 hover:text-emerald-700 font-medium text-sm mr-3">Edit</button>
-                        <button onClick={() => handleDelete(item.id)} className="text-red-600 hover:text-red-700 font-medium text-sm">Hapus</button>
+                      <td className="py-3 px-3 sm:py-4 sm:px-6 text-right whitespace-nowrap">
+                         <div className="flex justify-end items-center gap-1">
+                           <button title="Edit" onClick={() => openEdit(item)} className="p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                           <button title="Hapus" onClick={() => handleDelete(item.id)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                         </div>
                       </td>
                     )}
                   </tr>

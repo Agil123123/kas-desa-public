@@ -7,7 +7,7 @@ export async function GET() {
     const totalWarga = await db.select({ count: sql<number>`count(*)` }).from(warga);
     
     // Fetch all transactions for Jimpitan
-    const allJimpitan = await db.select().from(transaksi).where(sql`kategori = 'Kas Jimpitan' AND jenis = 'Masuk'`);
+    const allJimpitan = await db.select().from(transaksi).where(sql`kategori = 'Kas Jimpitan'`);
     // Fetch all Kas Karangtaruna
     const allKas = await db.select().from(kasKarangtaruna);
 
@@ -21,11 +21,11 @@ export async function GET() {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
     const startOfYear = new Date(now.getFullYear(), 0, 1).getTime();
 
-    // Helper to aggregate based on date
-    const aggregate = (data: any[], dateField: string, amountField: string, jenisFilter?: string) => {
+    // Helper to aggregate amounts by time period, filtered by jenis
+    const aggregateByJenis = (data: any[], dateField: string, amountField: string, jenisFilter: string) => {
       let today = 0, week = 0, month = 0, year = 0, total = 0;
       data.forEach(item => {
-        if (jenisFilter && item.jenis !== jenisFilter) return;
+        if (item.jenis !== jenisFilter) return;
         const d = new Date(item[dateField]).getTime();
         const amt = Number(item[amountField]) || 0;
         total += amt;
@@ -37,9 +37,25 @@ export async function GET() {
       return { today, week, month, year, total };
     };
 
-    const jimpitanStats = aggregate(allJimpitan, 'tanggal', 'nominal');
-    const kasMasukStats = aggregate(allKas, 'tanggal', 'nominal', 'Masuk');
-    const kasKeluarStats = aggregate(allKas, 'tanggal', 'nominal', 'Keluar');
+    // Jimpitan: pemasukan & pengeluaran
+    const jimpitanMasuk = aggregateByJenis(allJimpitan, 'tanggal', 'nominal', 'Masuk');
+    const jimpitanKeluar = aggregateByJenis(allJimpitan, 'tanggal', 'nominal', 'Keluar');
+    // Combined jimpitan stats (for backward compat): today/week/month/year = pemasukan only, total = pemasukan - pengeluaran
+    const jimpitanStats = {
+      today: jimpitanMasuk.today,
+      week: jimpitanMasuk.week,
+      month: jimpitanMasuk.month,
+      year: jimpitanMasuk.year,
+      total: jimpitanMasuk.total - jimpitanKeluar.total,
+    };
+
+    // Kas Karangtaruna: pemasukan & pengeluaran
+    const kasMasukStats = aggregateByJenis(allKas, 'tanggal', 'nominal', 'Masuk');
+    const kasKeluarStats = aggregateByJenis(allKas, 'tanggal', 'nominal', 'Keluar');
+
+    // Dynamic saldo: total pemasukan - total pengeluaran
+    const saldoKasDynamic = kasMasukStats.total - kasKeluarStats.total;
+    const saldoJimpitanDynamic = jimpitanMasuk.total - jimpitanKeluar.total;
 
     // Total jimpitan per RT
     const jimpitanPerRt = await db.select({
@@ -64,16 +80,15 @@ export async function GET() {
     const settings = await db.select().from(pengaturan).limit(1);
     const targetPerKk = settings.length > 0 ? settings[0].targetJimpitan : 30000;
 
-    const lastKasEntry = allKas.sort((a, b) => new Date(b.tanggal || 0).getTime() - new Date(a.tanggal || 0).getTime())[0];
-    const saldoKas = lastKasEntry ? lastKasEntry.saldoAkhir : 0;
-
     return NextResponse.json({
       totalWarga: totalWarga[0].count,
       jimpitanStats,
+      jimpitanMasukStats: jimpitanMasuk,
+      jimpitanKeluarStats: jimpitanKeluar,
       kasMasukStats,
       kasKeluarStats,
-      saldoKasKarangtaruna: saldoKas,
-      totalJimpitanKeseluruhan: jimpitanStats.total,
+      saldoKasKarangtaruna: saldoKasDynamic,
+      totalJimpitanKeseluruhan: saldoJimpitanDynamic,
       jimpitanPerRt,
       wargaPerRt,
       targetPerKk,
@@ -83,4 +98,3 @@ export async function GET() {
     return NextResponse.json({ error: 'Terjadi kesalahan internal pada server' }, { status: 500 });
   }
 }
-

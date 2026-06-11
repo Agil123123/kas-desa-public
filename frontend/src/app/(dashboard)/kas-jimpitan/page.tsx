@@ -50,7 +50,7 @@ export default function KasJimpitanPage() {
         <p className="text-gray-500 dark:text-gray-400 mt-1">Detail riwayat transaksi setoran jimpitan warga.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-center">
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Terkumpul (Minggu Ini)</p>
           <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">Rp {totalMinggu.toLocaleString('id-ID')}</p>
@@ -58,6 +58,10 @@ export default function KasJimpitanPage() {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-center">
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Terkumpul (Bulan Ini)</p>
           <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">Rp {totalBulan.toLocaleString('id-ID')}</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-center">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Pengeluaran</p>
+          <p className="text-3xl font-bold text-red-600 dark:text-red-400">Rp {totalKeluar.toLocaleString('id-ID')}</p>
         </div>
         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-center">
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Saldo Jimpitan</p>
@@ -108,11 +112,15 @@ export default function KasJimpitanPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-white dark:bg-gray-800">
-                  <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID Trx</th>
-                  <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Waktu</th>
-                  <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nama Warga</th>
-                  <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Petugas</th>
-                  <th className="py-3 px-6 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Nominal</th>
+                  <th className="hidden sm:table-cell py-2 px-3 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID Trx</th>
+                  <th className="py-2 px-3 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Waktu</th>
+                  <th className="py-2 px-3 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nama Warga</th>
+                  <th className="hidden sm:table-cell py-2 px-3 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Petugas</th>
+                  {/* Mobile: single Nominal column */}
+                  <th className="sm:hidden py-2 px-3 text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Nominal</th>
+                  {/* Desktop: separate columns */}
+                  <th className="hidden sm:table-cell py-2 px-3 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Pemasukan</th>
+                  <th className="hidden sm:table-cell py-2 px-3 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Pengeluaran</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -136,17 +144,27 @@ export default function KasJimpitanPage() {
                   return true;
                 }).map((trx) => (
                   <tr key={trx.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td className="py-3 px-6 text-xs font-mono text-gray-500">{trx.noTransaksi}</td>
-                    <td className="py-3 px-6 text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">{trx.tanggal}</td>
-                    <td className="py-3 px-6 font-medium text-gray-900 dark:text-white whitespace-nowrap">{trx.namaWarga || '-'} {trx.rtWarga ? <span className="text-xs font-normal text-gray-500 ml-1">(RT {trx.rtWarga})</span> : null}</td>
-                    <td className="py-3 px-6 text-sm text-gray-600 dark:text-gray-300">{trx.namaPetugas || '-'}</td>
-                    <td className={`py-3 px-6 text-right font-medium whitespace-nowrap ${trx.jenis === 'Keluar' ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                      {trx.jenis === 'Keluar' ? '- ' : '+ '}Rp {trx.nominal.toLocaleString('id-ID')}
+                    <td className="hidden sm:table-cell py-2 px-3 sm:py-3 sm:px-6 text-[10px] sm:text-xs font-mono text-gray-500">{trx.noTransaksi}</td>
+                    <td className="py-2 px-3 sm:py-3 sm:px-6 text-xs sm:text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">{trx.tanggal?.slice(0, 10) || '-'}</td>
+                    <td className="py-2 px-3 sm:py-3 sm:px-6 text-xs sm:text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">{trx.namaWarga || '-'} {trx.rtWarga ? <span className="text-[10px] sm:text-xs font-normal text-gray-500 ml-1">(RT {trx.rtWarga})</span> : null}</td>
+                    <td className="hidden sm:table-cell py-2 px-3 sm:py-3 sm:px-6 text-xs sm:text-sm text-gray-600 dark:text-gray-300">{trx.namaPetugas || '-'}</td>
+                    {/* Mobile: single Nominal column with color */}
+                    <td className="sm:hidden py-2 px-3 text-right text-xs font-semibold whitespace-nowrap">
+                      <span className={trx.jenis === 'Masuk' || !trx.jenis ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
+                        {trx.jenis === 'Masuk' || !trx.jenis ? '+' : '-'} Rp {trx.nominal.toLocaleString('id-ID')}
+                      </span>
+                    </td>
+                    {/* Desktop: separate columns */}
+                    <td className="hidden sm:table-cell py-2 px-3 sm:py-3 sm:px-6 text-right text-xs sm:text-sm font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                      {trx.jenis === 'Masuk' || !trx.jenis ? `+ Rp ${trx.nominal.toLocaleString('id-ID')}` : '-'}
+                    </td>
+                    <td className="hidden sm:table-cell py-2 px-3 sm:py-3 sm:px-6 text-right text-xs sm:text-sm font-medium text-red-600 dark:text-red-400 whitespace-nowrap">
+                      {trx.jenis === 'Keluar' ? `- Rp ${trx.nominal.toLocaleString('id-ID')}` : '-'}
                     </td>
                   </tr>
                 ))}
                 {transactions.length === 0 && (
-                  <tr><td colSpan={5} className="py-8 text-center text-gray-400">Belum ada transaksi jimpitan.</td></tr>
+                  <tr><td colSpan={6} className="py-8 text-center text-gray-400">Belum ada transaksi jimpitan.</td></tr>
                 )}
               </tbody>
             </table>
