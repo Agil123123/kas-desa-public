@@ -39,11 +39,50 @@ export async function POST(request: Request) {
       range: 'Kas Jimpitan!A1',
       valueInputOption: 'USER_ENTERED',
       requestBody: {
-        values: [['Tes Koneksi Berhasil', new Date().toISOString()]],
+        values: [['TEST-DELETE-ME', new Date().toISOString()]],
       },
     });
 
-    return NextResponse.json({ message: 'Koneksi berhasil! Data tes telah ditulis ke Kas Jimpitan.' });
+    // Test Reading
+    const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId: config[0].googleSheetId });
+    const sheet = spreadsheet.data.sheets?.find(s => s.properties?.title === 'Kas Jimpitan');
+    const sheetId = sheet?.properties?.sheetId;
+
+    const responseGet = await sheets.spreadsheets.values.get({
+      spreadsheetId: config[0].googleSheetId,
+      range: 'Kas Jimpitan!A:A',
+    });
+    const rows = responseGet.data.values || [];
+    let rowIndex = -1;
+    for (let i = rows.length - 1; i >= 0; i--) {
+      if (rows[i][0] === 'TEST-DELETE-ME') {
+        rowIndex = i;
+        break;
+      }
+    }
+
+    // Test Deleting
+    if (rowIndex !== -1 && sheetId !== undefined) {
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: config[0].googleSheetId,
+        requestBody: {
+          requests: [
+            {
+              deleteDimension: {
+                range: {
+                  sheetId: sheetId,
+                  dimension: 'ROWS',
+                  startIndex: rowIndex,
+                  endIndex: rowIndex + 1,
+                },
+              },
+            },
+          ],
+        },
+      });
+    }
+
+    return NextResponse.json({ message: 'Koneksi berhasil! Akses Tulis, Baca, dan Hapus (Delete) berfungsi dengan baik.' });
   } catch (error: any) {
     console.error('Test Sheets Error:', error);
     // Return the actual Google API error message
