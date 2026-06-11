@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import { db, transaksi, warga, users, kasKarangtaruna, notifications } from '@kas/backend';
+import { db, transaksi, warga, users, kasKarangtaruna, notifications, pengaturan } from '@kas/backend';
 import { eq, desc } from 'drizzle-orm';
 import { requireAuth } from '@/lib/auth';
 import { generateId } from '@/lib/id';
 import { transaksiSchema } from '@/lib/validation';
+import { appendToSheet } from '@/lib/google-sheets';
 
 export const dynamic = 'force-dynamic';
 
@@ -132,6 +133,26 @@ export async function POST(request: Request) {
     }
 
     const created = await db.select().from(transaksi).where(eq(transaksi.id, id));
+
+    // --- Google Sheets Sync (Fire and Forget) ---
+    try {
+      const config = await db.select().from(pengaturan).limit(1);
+      if (config.length > 0 && config[0].googleSheetId) {
+        const rowData = [
+          created[0].noTransaksi,
+          created[0].tanggal,
+          data.kategori,
+          data.jenis,
+          data.nominal,
+          data.uraian,
+          auth.user.name
+        ];
+        // Asynchronous non-blocking call
+        appendToSheet(config[0].googleSheetId, data.kategori === 'Kas Jimpitan' ? 'Kas Jimpitan' : 'Kas Karangtaruna', rowData);
+      }
+    } catch (e) {
+      console.error('Failed to sync to Google Sheets:', e);
+    }
     return NextResponse.json(created[0], { status: 201 });
   } catch (error: any) {
     console.error('API Error:', error);

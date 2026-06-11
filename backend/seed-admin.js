@@ -22,7 +22,9 @@ async function seedAdmin() {
   const id = `usr-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
   await client.execute({
-    sql: `INSERT INTO users (id, name, email, password, role, is_active, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now','localtime'))`,
+    sql: `INSERT INTO users (id, name, email, password, role, is_active, created_at) 
+          VALUES (?, ?, ?, ?, ?, ?, datetime('now','localtime'))
+          ON CONFLICT (email) DO UPDATE SET password = excluded.password`,
     args: [id, 'Administrator', process.env.ADMIN_EMAIL || 'admin@sikarta.id', password, 'Super Admin', 1],
   });
 

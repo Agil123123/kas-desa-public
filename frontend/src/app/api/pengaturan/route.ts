@@ -17,6 +17,7 @@ export async function GET() {
         rw: '04',
         targetJimpitan: 30000,
         allowedDomains: 'gmail.com,nawapintar.com',
+        googleSheetId: '',
       });
     }
     return NextResponse.json(data[0]);
@@ -42,6 +43,7 @@ export async function PUT(request: Request) {
         rw: body.rw,
         targetJimpitan: body.targetJimpitan,
         allowedDomains: body.allowedDomains,
+        googleSheetId: body.googleSheetId,
       });
     } else {
       await db.update(pengaturan).set({
@@ -51,6 +53,7 @@ export async function PUT(request: Request) {
         rw: body.rw,
         targetJimpitan: body.targetJimpitan,
         allowedDomains: body.allowedDomains,
+        googleSheetId: body.googleSheetId,
       }).where(eq(pengaturan.id, existing[0].id));
     }
     const updated = await db.select().from(pengaturan).limit(1);

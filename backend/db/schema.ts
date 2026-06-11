@@ -10,6 +10,7 @@ export const pengaturan = sqliteTable('pengaturan', {
   rw: text('rw').default('04'),
   targetJimpitan: integer('target_jimpitan').default(30000),
   allowedDomains: text('allowed_domains').default('gmail.com,nawapintar.com'),
+  googleSheetId: text('google_sheet_id').default(''),
 });
 
 // ── Master Data RT ─────────────────────────────────────

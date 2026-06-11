@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 
-type Settings = { id: string; namaOrganisasi: string; alamat: string; dusun: string; rw: string; targetJimpitan: number; allowedDomains: string };
+type Settings = { id: string; namaOrganisasi: string; alamat: string; dusun: string; rw: string; targetJimpitan: number; allowedDomains: string; googleSheetId?: string };
 type RtItem = { id: string; nomor: string; ketuaRt: string | null; jumlahKk: number | null };
 type UserItem = { id: string; name: string; email: string; role: string; isActive: boolean | null };
 
@@ -23,9 +23,19 @@ export default function PengaturanPage() {
   const handleSaveSettings = async () => {
     if (!settings) return;
     setSavingSettings(true);
-    await fetch('/api/pengaturan', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings) });
-    setSavingSettings(false);
-    alert('Pengaturan berhasil disimpan!');
+    try {
+      const res = await fetch('/api/pengaturan', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings) });
+      setSavingSettings(false);
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || 'Gagal menyimpan pengaturan. Pastikan Anda memiliki akses Super Admin.');
+        return;
+      }
+      alert('Pengaturan berhasil disimpan!');
+    } catch (e) {
+      setSavingSettings(false);
+      alert('Gagal menghubungi server.');
+    }
   };
 
   // ── Master RT ──────────────────────────────────────
@@ -316,7 +326,7 @@ export default function PengaturanPage() {
       )}
 
       {/* ═══ TAB INTEGRASI ═══ */}
-      {activeTab === "integrasi" && (
+      {activeTab === "integrasi" && settings && (
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 animate-fade-in-up">
           <div className="flex items-start gap-4">
             <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
@@ -328,15 +338,15 @@ export default function PengaturanPage() {
               <div className="space-y-4 max-w-xl">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Spreadsheet ID</label>
-                  <input type="text" placeholder="Masukkan ID dari URL Google Sheets Anda" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input type="text" value={settings.googleSheetId || ''} onChange={e => setSettings({ ...settings, googleSheetId: e.target.value })} placeholder="Masukkan ID dari URL Google Sheets Anda" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Google Service Account JSON</label>
-                  <textarea rows={3} placeholder="Paste kredensial JSON dari Google Cloud Console" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 font-mono text-xs rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                  <textarea rows={3} placeholder="Paste kredensial JSON dari Google Cloud Console" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 font-mono text-xs rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" readOnly value="Peringatan: Kredensial (Email & Private Key) harus diset di environment variables server (.env), tidak disimpan di database demi keamanan."></textarea>
                 </div>
                 <div className="flex gap-3 pt-2">
-                  <button className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-md shadow-blue-500/20">Simpan Konfigurasi</button>
-                  <button className="px-5 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium rounded-lg transition-colors">Tes Koneksi</button>
+                  <button onClick={handleSaveSettings} disabled={savingSettings} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-md shadow-blue-500/20 disabled:opacity-50">{savingSettings ? 'Menyimpan...' : 'Simpan Konfigurasi'}</button>
+                  <button onClick={() => alert('Fitur tes koneksi akan diimplementasikan.')} className="px-5 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium rounded-lg transition-colors">Tes Koneksi</button>
                 </div>
               </div>
             </div>
