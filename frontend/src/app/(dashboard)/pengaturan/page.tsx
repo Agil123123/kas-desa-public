@@ -125,10 +125,13 @@ export default function PengaturanPage() {
   };
 
   const roleColors: Record<string, string> = {
-    'Super Admin': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-    'Bendahara': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
-    'Petugas': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-    'Ketua RT': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+    'Super Admin': 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800',
+    'Admin': 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800',
+    'Bendahara': 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800',
+    'Petugas': 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800',
+    'Petugas Jimpitan': 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800',
+    'Ketua RT': 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800',
+    'Anggota': 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700',
   };
 
   return (
@@ -280,13 +283,13 @@ export default function PengaturanPage() {
                           <div className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white">{u.name}</div>
                           <div className="text-[10px] sm:text-xs text-gray-500 mt-0.5">{u.email}</div>
                           <div className="sm:hidden mt-1 flex gap-2">
-                            <span className={`px-2 py-0.5 text-[10px] rounded font-medium border shadow-sm ${roleColors[u.role] || 'bg-gray-100 text-gray-800'}`.replace('bg-', 'border-').replace('100', '200') + ` ${roleColors[u.role]}`}>{u.role}</span>
+                            <span className={`px-2 py-0.5 text-[10px] rounded font-medium border shadow-sm ${roleColors[u.role] || roleColors['Anggota']}`}>{u.role}</span>
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="hidden sm:table-cell py-3 px-4 sm:px-6">
-                      <span className={`px-2.5 py-1 text-xs rounded-lg font-medium border shadow-sm ${roleColors[u.role] || 'bg-gray-100 text-gray-800 border-gray-200'}`.replace('bg-', 'border-').replace('100', '200') + ` ${roleColors[u.role]}`}>{u.role}</span>
+                      <span className={`px-2.5 py-1 text-xs rounded-lg font-medium border shadow-sm ${roleColors[u.role] || roleColors['Anggota']}`}>{u.role}</span>
                     </td>
                     <td className="py-3 px-4 sm:px-6">
                       {u.isActive !== false ? 
