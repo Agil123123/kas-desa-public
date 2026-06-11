@@ -85,7 +85,7 @@ export default function RevenueChart({ title = "Tren Pemasukan", type = "combine
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
-            margin={{ top: 20, right: isMobile ? 0 : 10, left: isMobile ? -5 : 10, bottom: 0 }}
+            margin={{ top: 20, right: isMobile ? 10 : 10, left: 0, bottom: 0 }}
             barGap={isMobile ? 2 : 8}
           >
             <defs>
@@ -103,7 +103,7 @@ export default function RevenueChart({ title = "Tren Pemasukan", type = "combine
               dataKey="name" 
               axisLine={false} 
               tickLine={false} 
-              tick={{ fill: '#9ca3af', fontSize: isMobile ? 10 : 12, fontWeight: 500 }} 
+              tick={{ fill: '#9ca3af', fontSize: isMobile ? 11 : 12, fontWeight: 500 }} 
               dy={10}
             />
             <YAxis 
@@ -111,8 +111,8 @@ export default function RevenueChart({ title = "Tren Pemasukan", type = "combine
               tickLine={false} 
               domain={[0, 'auto']}
               tickCount={isMobile ? 5 : 6}
-              width={isMobile ? 40 : 80}
-              tick={{ fill: '#9ca3af', fontSize: isMobile ? 10 : 12, fontWeight: 500 }}
+              width={isMobile ? 50 : 80}
+              tick={{ fill: '#9ca3af', fontSize: isMobile ? 11 : 12, fontWeight: 500 }}
               tickFormatter={formatYAxis}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(156, 163, 175, 0.1)' }} />
