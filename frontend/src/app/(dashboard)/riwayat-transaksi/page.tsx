@@ -105,40 +105,42 @@ export default function RiwayatTransaksiPage() {
         </div>
         
         {/* Filter Waktu */}
-        <div className="flex flex-col sm:flex-row items-end gap-3">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter:</label>
-            <select 
-              value={filterWaktu}
-              onChange={(e) => setFilterWaktu(e.target.value)}
-              className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white shadow-sm"
-            >
-              <option value="Semua Waktu">Semua Waktu</option>
-              <option value="Bulan Ini">Bulan Ini</option>
-              <option value="Bulan Lalu">Bulan Lalu</option>
-              <option value="Tahun Ini">Tahun Ini</option>
-              <option value="Rentang Kustom">Rentang Kustom (Kalender)</option>
-            </select>
+        <div className="flex flex-col sm:flex-row sm:items-end gap-3 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Filter:</label>
+              <select 
+                value={filterWaktu}
+                onChange={(e) => setFilterWaktu(e.target.value)}
+                className="flex-1 sm:flex-none bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white shadow-sm min-w-0"
+              >
+                <option value="Semua Waktu">Semua Waktu</option>
+                <option value="Bulan Ini">Bulan Ini</option>
+                <option value="Bulan Lalu">Bulan Lalu</option>
+                <option value="Tahun Ini">Tahun Ini</option>
+                <option value="Rentang Kustom">Rentang Kustom (Kalender)</option>
+              </select>
+            </div>
             <input 
               type="text" 
               placeholder="Cari transaksi..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white shadow-sm w-full sm:w-48"
+              className="w-full sm:w-48 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white shadow-sm"
             />
             <button onClick={() => {
               import('@/utils/exportToExcel').then(m => m.exportToExcel(filteredData, 'Riwayat_Transaksi', 'Transaksi'));
-            }} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            }} className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm flex items-center justify-center gap-2">
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
               Unduh Excel
             </button>
           </div>
           
           {filterWaktu === "Rentang Kustom" && (
-            <div className="flex items-center gap-2 animate-fade-in-up">
-              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white shadow-sm" />
+            <div className="flex items-center gap-2 w-full sm:w-auto animate-fade-in-up">
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full sm:w-auto bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white shadow-sm" />
               <span className="text-gray-500">-</span>
-              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white shadow-sm" />
+              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full sm:w-auto bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white shadow-sm" />
             </div>
           )}
         </div>
