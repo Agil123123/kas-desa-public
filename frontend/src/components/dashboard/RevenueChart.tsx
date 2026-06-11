@@ -6,6 +6,14 @@ export default function RevenueChart({ title = "Tren Pemasukan", type = "combine
   const [filter, setFilter] = useState("8 Minggu");
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -80,8 +88,8 @@ export default function RevenueChart({ title = "Tren Pemasukan", type = "combine
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
-            margin={{ top: 20, right: 10, left: 20, bottom: 0 }}
-            barGap={8}
+            margin={{ top: 20, right: isMobile ? 0 : 10, left: isMobile ? -20 : 10, bottom: 0 }}
+            barGap={isMobile ? 2 : 8}
           >
             <defs>
               <linearGradient id="colorKarangtaruna" x1="0" y1="0" x2="0" y2="1">
@@ -98,7 +106,7 @@ export default function RevenueChart({ title = "Tren Pemasukan", type = "combine
               dataKey="name" 
               axisLine={false} 
               tickLine={false} 
-              tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 500 }} 
+              tick={{ fill: '#9ca3af', fontSize: isMobile ? 10 : 12, fontWeight: 500 }} 
               dy={10}
             />
             <YAxis 
@@ -106,7 +114,8 @@ export default function RevenueChart({ title = "Tren Pemasukan", type = "combine
               tickLine={false} 
               ticks={ticks}
               domain={[0, maxTick]}
-              tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 500 }}
+              width={isMobile ? 55 : 80}
+              tick={{ fill: '#9ca3af', fontSize: isMobile ? 10 : 12, fontWeight: 500 }}
               tickFormatter={(value) => value.toLocaleString('id-ID')}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(156, 163, 175, 0.1)' }} />
