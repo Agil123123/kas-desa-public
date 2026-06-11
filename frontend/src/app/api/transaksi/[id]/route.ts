@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import { db, transaksi, kasKarangtaruna, auditLog } from '@kas/backend';
+import { db, transaksi, kasKarangtaruna, auditLog, pengaturan } from '@kas/backend';
 import { eq } from 'drizzle-orm';
 import { requireAuth } from '@/lib/auth';
 import { generateId } from '@/lib/id';
 import { transaksiUpdateSchema } from '@/lib/validation';
 import { recalculateSaldoChain } from '@/lib/recalculate-saldo';
+import { deleteFromSheet, updateInSheet } from '@/lib/google-sheets';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,6 +44,27 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       status: data.status,
     }).where(eq(transaksi.id, id));
     const updated = await db.select().from(transaksi).where(eq(transaksi.id, id));
+
+    // --- Google Sheets Sync Update ---
+    try {
+      const config = await db.select().from(pengaturan).limit(1);
+      if (config.length > 0 && config[0].googleSheetId && updated.length > 0) {
+        const trx = updated[0];
+        const rowData = [
+          trx.noTransaksi,
+          trx.tanggal,
+          trx.kategori,
+          trx.jenis,
+          trx.nominal,
+          trx.uraian,
+          auth.user.name // Edited by
+        ];
+        await updateInSheet(config[0].googleSheetId, trx.kategori === 'Kas Jimpitan' ? 'Kas Jimpitan' : 'Kas Karangtaruna', trx.noTransaksi, rowData);
+      }
+    } catch (e) {
+      console.error('Failed to update Google Sheets:', e);
+    }
+
     return NextResponse.json(updated[0]);
   } catch (error: any) {
     console.error('API Error:', error);
@@ -99,6 +121,16 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
       });
     } catch (e) {
       console.error('Failed to write audit log', e);
+    }
+
+    // --- Google Sheets Sync Delete ---
+    try {
+      const config = await db.select().from(pengaturan).limit(1);
+      if (config.length > 0 && config[0].googleSheetId) {
+        await deleteFromSheet(config[0].googleSheetId, trx.kategori === 'Kas Jimpitan' ? 'Kas Jimpitan' : 'Kas Karangtaruna', trx.noTransaksi);
+      }
+    } catch (e) {
+      console.error('Failed to delete from Google Sheets:', e);
     }
 
     return NextResponse.json({ success: true });
