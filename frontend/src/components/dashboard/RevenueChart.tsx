@@ -112,7 +112,7 @@ export default function RevenueChart({ title = "Tren Pemasukan", type = "combine
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(156, 163, 175, 0.1)' }} />
             {type === 'combined' ? (
               <>
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '13px', paddingTop: '20px' }} formatter={(value) => <span className="text-gray-700 dark:text-gray-300 ml-1 font-medium">{value === 'karangtaruna' ? 'Karangtaruna' : 'Jimpitan'}</span>} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '13px', paddingTop: '20px' }} formatter={(value: string) => <span className="text-gray-700 dark:text-gray-300 ml-1 font-medium">{value === 'karangtaruna' ? 'Karangtaruna' : 'Jimpitan'}</span>} />
                 <Bar dataKey="karangtaruna" fill="url(#colorKarangtaruna)" radius={[6, 6, 0, 0]} animationDuration={1500} />
                 <Bar dataKey="jimpitan" fill="url(#colorJimpitan)" radius={[6, 6, 0, 0]} animationDuration={1500} />
               </>
