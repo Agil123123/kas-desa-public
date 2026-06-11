@@ -31,6 +31,7 @@ export default function DataWargaPage() {
   const [form, setForm] = useState({ namaKk: '', nik: '', rt: '01', rw: '04' });
   const [saving, setSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchWarga = useCallback(async () => {
     setLoading(true);
@@ -48,7 +49,11 @@ export default function DataWargaPage() {
 
   useEffect(() => { fetchWarga(); fetchRt(); }, [fetchWarga, fetchRt]);
 
-  const filteredWarga = activeTab === "semua" ? wargaList : wargaList.filter(w => w.rt === activeTab);
+  const filteredWarga = (activeTab === "semua" ? wargaList : wargaList.filter(w => w.rt === activeTab)).filter(w => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return w.namaKk.toLowerCase().includes(q) || (w.nik || '').includes(q) || w.kodeUnik.toLowerCase().includes(q);
+  });
   const uniqueRts = [...new Set(wargaList.map(w => w.rt))].sort();
 
   const openCreate = () => {
@@ -115,7 +120,14 @@ export default function DataWargaPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Data Warga (Peserta Jimpitan)</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Manajemen data rumah tangga peserta jimpitan.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <input 
+            type="text" 
+            placeholder="Cari nama, NIK, QR..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500 outline-none w-full sm:w-48"
+          />
           <button
             onClick={() => window.open(`/data-warga/cetak-qr?rt=${activeTab}`, '_blank')}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2 print:hidden"

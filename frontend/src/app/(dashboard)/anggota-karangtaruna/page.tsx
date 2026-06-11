@@ -18,6 +18,7 @@ export default function AnggotaKarangtarunaPage() {
   const [saving, setSaving] = useState(false);
   const [userRole, setUserRole] = useState("Anggota");
   const [orgName, setOrgName] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -93,13 +94,22 @@ export default function AnggotaKarangtarunaPage() {
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50 dark:bg-gray-900/50">
           <h2 className="font-semibold text-gray-900 dark:text-white">Daftar Anggota Karangtaruna</h2>
-          {(userRole === 'Super Admin' || userRole === 'Admin') && (
-            <button onClick={openCreate} className="px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-lg text-sm font-medium transition-colors">
-              + Tambah Anggota
-            </button>
-          )}
+          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3 w-full sm:w-auto">
+            <input 
+              type="text" 
+              placeholder="Cari anggota..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white shadow-sm w-full sm:w-48"
+            />
+            {(userRole === 'Super Admin' || userRole === 'Admin') && (
+              <button onClick={openCreate} className="px-3 py-1.5 w-full sm:w-auto text-center bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-lg text-sm font-medium transition-colors">
+                + Tambah Anggota
+              </button>
+            )}
+          </div>
         </div>
 
         {loading ? (
@@ -121,7 +131,14 @@ export default function AnggotaKarangtarunaPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {anggotaList.map((item) => (
+                {anggotaList.filter(item => {
+                  if (!searchQuery) return true;
+                  const q = searchQuery.toLowerCase();
+                  const nama = item.nama.toLowerCase();
+                  const jabatan = item.jabatan.toLowerCase();
+                  const rt = item.rt ? item.rt.toLowerCase() : '';
+                  return nama.includes(q) || jabatan.includes(q) || rt.includes(q);
+                }).map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                     <td className="py-3 px-3 sm:py-4 sm:px-6">
                       <div className="flex items-center gap-3">
@@ -153,8 +170,12 @@ export default function AnggotaKarangtarunaPage() {
                     )}
                   </tr>
                 ))}
-                {anggotaList.length === 0 && (
-                  <tr><td colSpan={4} className="py-8 text-center text-gray-400">Belum ada data anggota.</td></tr>
+                {anggotaList.filter(item => {
+                  if (!searchQuery) return true;
+                  const q = searchQuery.toLowerCase();
+                  return item.nama.toLowerCase().includes(q) || item.jabatan.toLowerCase().includes(q) || (item.rt ? item.rt.toLowerCase() : '').includes(q);
+                }).length === 0 && (
+                  <tr><td colSpan={userRole === 'Super Admin' || userRole === 'Admin' ? 4 : 3} className="py-8 text-center text-gray-400">Data tidak ditemukan.</td></tr>
                 )}
               </tbody>
             </table>
