@@ -58,7 +58,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
         and(
           isNull(kasKarangtaruna.transaksiId),
           eq(kasKarangtaruna.nominal, trx.nominal),
-          eq(kasKarangtaruna.uraian, trx.uraian)
+          eq(kasKarangtaruna.uraian, trx.uraian || '')
         )
       );
     }
