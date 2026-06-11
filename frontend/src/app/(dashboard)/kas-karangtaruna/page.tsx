@@ -92,17 +92,7 @@ export default function KasKarangtarunaPage() {
     if (!form.nominal || !form.uraian) return;
     setSaving(true);
     try {
-      // Create kas_rt entry
-      await fetch('/api/kas-karangtaruna', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jenis: form.jenis,
-          nominal: parseInt(form.nominal),
-          uraian: form.uraian,
-          tanggal: form.tanggal || undefined
-        }),
-      });
+      // POST /api/transaksi will automatically create the matching kas_karangtaruna entry
 
       // Also create matching transaksi
       await fetch('/api/transaksi', {

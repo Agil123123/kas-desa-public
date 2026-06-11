@@ -55,6 +55,24 @@ export async function POST(request: Request) {
       status: 'Success',
     });
 
+    if ((body.kategori || 'Kas Jimpitan') === 'Kas Karangtaruna') {
+      const { kasKarangtaruna } = await import('@kas/backend');
+      const { desc } = await import('drizzle-orm');
+      const lastEntry = await db.select().from(kasKarangtaruna).orderBy(desc(kasKarangtaruna.createdAt)).limit(1);
+      const lastSaldo = lastEntry.length > 0 ? lastEntry[0].saldoAkhir : 0;
+      const newSaldo = (body.jenis || 'Masuk') === 'Masuk' ? lastSaldo + parseInt(body.nominal) : lastSaldo - parseInt(body.nominal);
+
+      await db.insert(kasKarangtaruna).values({
+        id: `kr-${Date.now()}`,
+        transaksiId: id,
+        jenis: body.jenis || 'Masuk',
+        nominal: parseInt(body.nominal),
+        saldoAkhir: newSaldo,
+        uraian: body.uraian || '',
+        tanggal: body.tanggal || new Date().toISOString().slice(0, 16).replace('T', ' '),
+      });
+    }
+
     // --- System Notification Trigger ---
     if (body.petugasId) {
       const { notifications, users } = await import('@kas/backend');

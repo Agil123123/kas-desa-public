@@ -52,6 +52,17 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     // Delete related kas entry first
     await db.delete(kasKarangtaruna).where(eq(kasKarangtaruna.transaksiId, id));
 
+    if (trx.kategori === 'Kas Karangtaruna') {
+      const { and, isNull } = await import('drizzle-orm');
+      await db.delete(kasKarangtaruna).where(
+        and(
+          isNull(kasKarangtaruna.transaksiId),
+          eq(kasKarangtaruna.nominal, trx.nominal),
+          eq(kasKarangtaruna.uraian, trx.uraian)
+        )
+      );
+    }
+
     // Delete the transaction
     await db.delete(transaksi).where(eq(transaksi.id, id));
 
