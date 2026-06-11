@@ -25,6 +25,12 @@ export default function LaporanPage() {
   const [totalJimpitan, setTotalJimpitan] = useState(0);
   const [dashboardData, setDashboardData] = useState<any>(null);
 
+  // Warga Report State
+  const [reportMonth, setReportMonth] = useState((new Date().getMonth() + 1).toString().padStart(2, '0'));
+  const [reportYear, setReportYear] = useState(new Date().getFullYear().toString());
+  const [wargaReport, setWargaReport] = useState<any>(null);
+  const [wargaLoading, setWargaLoading] = useState(false);
+
   const fetchLedger = useCallback(async () => {
     setLoading(true);
     try {
@@ -79,13 +85,28 @@ export default function LaporanPage() {
         });
         setRekapRT(formattedRt);
       }
+      }
     } catch (e) {
       console.error(e);
     }
     setLoading(false);
   }, []);
 
+  const fetchWargaReport = useCallback(async () => {
+    if (activeReport !== 'warga') return;
+    setWargaLoading(true);
+    try {
+      const res = await fetch(`/api/laporan/warga-bulanan?month=${reportMonth}&year=${reportYear}`);
+      const data = await res.json();
+      setWargaReport(data);
+    } catch (err) {
+      console.error(err);
+    }
+    setWargaLoading(false);
+  }, [activeReport, reportMonth, reportYear]);
+
   useEffect(() => { fetchLedger(); }, [fetchLedger]);
+  useEffect(() => { fetchWargaReport(); }, [fetchWargaReport]);
 
   // Filter ledger based on dates
   const filteredLedger = ledger.filter(item => {
@@ -138,6 +159,20 @@ export default function LaporanPage() {
           ];
 
           XLSX.utils.book_append_sheet(wb, ws, "Riwayat Transaksi Kas");
+        } else if (activeReport === 'warga') {
+          if (!wargaReport) return;
+          const headers = ['Nama Warga', 'RT', 'RW'];
+          for(let i=1; i<=wargaReport.jumlahMinggu; i++) headers.push(`Minggu ${i}`);
+          
+          const data = wargaReport.data.map((w: any) => {
+             const row: any = { 'Nama Warga': w.nama, 'RT': w.rt, 'RW': w.rw };
+             w.minggu.forEach((m: any) => {
+                row[`Minggu ${m.mingguKe}`] = m.status === 'Sudah' ? `Sudah (Rp ${m.nominal})` : 'Belum';
+             });
+             return row;
+          });
+          const ws = XLSX.utils.json_to_sheet(data, { header: headers });
+          XLSX.utils.book_append_sheet(wb, ws, "Laporan Mingguan Warga");
         }
 
         // Generate Excel file and trigger download
@@ -192,6 +227,12 @@ export default function LaporanPage() {
           className={`px-6 py-2.5 text-sm font-medium rounded-lg transition-all ${activeReport === 'karangtaruna' ? 'bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'}`}
         >
           Laporan Kas Karangtaruna
+        </button>
+        <button 
+          onClick={() => setActiveReport("warga")} 
+          className={`px-6 py-2.5 text-sm font-medium rounded-lg transition-all ${activeReport === 'warga' ? 'bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'}`}
+        >
+          Laporan Mingguan Warga
         </button>
       </div>
 
@@ -364,6 +405,92 @@ export default function LaporanPage() {
                   </tbody>
                 </table>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeReport === "warga" && (
+        <div className="animate-fade-in-up space-y-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div className="p-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex flex-col md:flex-row justify-between md:items-center gap-4">
+              <div>
+                <h2 className="font-semibold text-gray-900 dark:text-white">Laporan Setoran Mingguan Warga</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Pantau status pembayaran jimpitan warga pada setiap minggu di bulan tertentu.</p>
+              </div>
+              <div className="flex gap-2">
+                <select value={reportMonth} onChange={(e) => setReportMonth(e.target.value)} className="px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-sm focus:ring-emerald-500">
+                  <option value="01">Januari</option>
+                  <option value="02">Februari</option>
+                  <option value="03">Maret</option>
+                  <option value="04">April</option>
+                  <option value="05">Mei</option>
+                  <option value="06">Juni</option>
+                  <option value="07">Juli</option>
+                  <option value="08">Agustus</option>
+                  <option value="09">September</option>
+                  <option value="10">Oktober</option>
+                  <option value="11">November</option>
+                  <option value="12">Desember</option>
+                </select>
+                <select value={reportYear} onChange={(e) => setReportYear(e.target.value)} className="px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-sm focus:ring-emerald-500">
+                  <option value="2026">2026</option>
+                  <option value="2025">2025</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto p-0">
+              {wargaLoading ? (
+                <div className="py-12 text-center text-emerald-500"><svg className="w-8 h-8 animate-spin mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></div>
+              ) : wargaReport ? (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                      <th className="py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky left-0 bg-white dark:bg-gray-800 shadow-[1px_0_0_0_#e5e7eb] dark:shadow-[1px_0_0_0_#374151]">Warga</th>
+                      <th className="py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider border-r border-gray-200 dark:border-gray-700 text-center">RT</th>
+                      {Array.from({ length: wargaReport.jumlahMinggu }).map((_, i) => (
+                        <th key={i} className="py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center border-r border-gray-200 dark:border-gray-700">Minggu {i+1}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {wargaReport.data.map((w: any) => (
+                      <tr key={w.wargaId} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white sticky left-0 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700/50 shadow-[1px_0_0_0_#e5e7eb] dark:shadow-[1px_0_0_0_#374151]">
+                          {w.nama}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-500 dark:text-gray-400 text-center border-r border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30">
+                          {w.rt}
+                        </td>
+                        {w.minggu.slice(0, wargaReport.jumlahMinggu).map((m: any) => (
+                          <td key={m.mingguKe} className="py-3 px-4 text-center border-r border-gray-200 dark:border-gray-700">
+                            {m.status === 'Sudah' ? (
+                              <div className="inline-flex flex-col items-center gap-1">
+                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 mb-0.5">
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                                </span>
+                                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Rp {m.nominal.toLocaleString('id-ID')}</span>
+                              </div>
+                            ) : (
+                              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500" title="Belum Setor">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
+                              </span>
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                    {wargaReport.data.length === 0 && (
+                      <tr>
+                        <td colSpan={wargaReport.jumlahMinggu + 2} className="py-12 text-center text-gray-500">
+                          Tidak ada data warga atau transaksi pada bulan ini.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              ) : null}
             </div>
           </div>
         </div>
