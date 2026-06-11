@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
 import { db, kasKarangtaruna, transaksi, users } from '@kas/backend';
 import { desc, eq } from 'drizzle-orm';
+import { requireAuth } from '@/lib/auth';
+import { generateId } from '@/lib/id';
 
 export async function GET() {
   try {
+    const auth = await requireAuth('Petugas');
+    if (!auth.success) return auth.response;
+
     const data = await db.select({
       id: kasKarangtaruna.id,
       jenis: kasKarangtaruna.jenis,
@@ -28,8 +33,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAuth('Bendahara');
+    if (!auth.success) return auth.response;
+
     const body = await request.json();
-    const id = `kr-${Date.now()}`;
+    const id = generateId('kr');
 
     // Get last saldo
     const lastEntry = await db.select().from(kasKarangtaruna).orderBy(desc(kasKarangtaruna.createdAt)).limit(1);

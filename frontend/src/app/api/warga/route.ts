@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db, warga, transaksi, auditLog } from '@kas/backend';
 import { eq, sql } from 'drizzle-orm';
-import { cookies } from 'next/headers';
+import { requireAuth } from '@/lib/auth';
+import { generateId } from '@/lib/id';
 
 export async function GET() {
   try {
@@ -31,10 +32,13 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAuth('Admin');
+    if (!auth.success) return auth.response;
+
     const body = await request.json();
-    const id = `wrg-${Date.now()}`;
+    const id = generateId('wrg');
     const kodeUnik = `QR-${Date.now().toString(36).toUpperCase()}`;
-    const nik = body.nik || `NO-NIK-${Date.now()}`; // Fallback optional NIK
+    const nik = body.nik || `NO-NIK-${Date.now()}`;
     await db.insert(warga).values({
       id,
       kodeUnik,
@@ -44,22 +48,15 @@ export async function POST(request: Request) {
       rw: body.rw || '04',
     });
 
-    // Attempt to record audit log
+    // Audit log with user from session
     try {
-      const sessionToken = (await cookies()).get('session_token')?.value;
-      if (sessionToken) {
-        const { users } = require('@kas/backend');
-        const currentUser = await db.select().from(users).where(eq(users.sessionToken, sessionToken));
-        if (currentUser.length > 0) {
-          await db.insert(auditLog).values({
-            id: `log-${Date.now()}`,
-            userId: currentUser[0].id,
-            aksi: 'CREATE',
-            tabel: 'warga',
-            keterangan: `Menambahkan warga baru: ${body.namaKk} (RT ${body.rt})`
-          });
-        }
-      }
+      await db.insert(auditLog).values({
+        id: generateId('log'),
+        userId: auth.user.id,
+        aksi: 'CREATE',
+        tabel: 'warga',
+        keterangan: `Menambahkan warga baru: ${body.namaKk} (RT ${body.rt})`
+      });
     } catch (e) {
       console.error('Failed to write audit log', e);
     }

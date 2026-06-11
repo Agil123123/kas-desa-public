@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { db, pengaturan } from '@kas/backend';
 import { eq } from 'drizzle-orm';
+import { requireAuth } from '@/lib/auth';
 
 export async function GET() {
   try {
     const data = await db.select().from(pengaturan).limit(1);
     if (!data.length) {
-      // Return defaults if nothing saved yet
       return NextResponse.json({
         id: 'cfg-1',
         namaOrganisasi: 'Karangtaruna Bhakti Karya',
@@ -26,6 +26,9 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
+    const auth = await requireAuth('Super Admin');
+    if (!auth.success) return auth.response;
+
     const body = await request.json();
     const existing = await db.select().from(pengaturan).limit(1);
     if (existing.length === 0) {
@@ -55,4 +58,3 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: 'Terjadi kesalahan internal pada server' }, { status: 500 });
   }
 }
-

@@ -1,5 +1,5 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
-import { sql } from 'drizzle-orm';
+import { sql, relations } from 'drizzle-orm';
 
 // ── Pengaturan (Org Settings) ──────────────────────────
 export const pengaturan = sqliteTable('pengaturan', {
@@ -92,10 +92,10 @@ export const notifications = sqliteTable('notifications', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
   message: text('message').notNull(),
-  type: text('type').default('info'), // 'info', 'success', 'warning', 'alert'
-  targetRole: text('target_role').default('Semua'), // 'Semua', 'Super Admin', 'Bendahara', etc.
-  senderId: text('sender_id').references(() => users.id), // null if system
-  isRead: integer('is_read', { mode: 'boolean' }).default(false), // Simple global read status for simplicity, or we can leave it
+  type: text('type').default('info'),
+  targetRole: text('target_role').default('Semua'),
+  senderId: text('sender_id').references(() => users.id),
+  isRead: integer('is_read', { mode: 'boolean' }).default(false),
   createdAt: text('created_at').default(sql`(datetime('now','localtime'))`),
 });
 
@@ -103,8 +103,64 @@ export const notifications = sqliteTable('notifications', {
 export const auditLog = sqliteTable('audit_log', {
   id: text('id').primaryKey(),
   userId: text('user_id').references(() => users.id).notNull(),
-  aksi: text('aksi').notNull(), // CREATE, UPDATE, DELETE
-  tabel: text('tabel').notNull(), // 'warga', 'pengaturan', 'anggota'
+  aksi: text('aksi').notNull(),
+  tabel: text('tabel').notNull(),
   keterangan: text('keterangan').notNull(),
   createdAt: text('created_at').default(sql`(datetime('now','localtime'))`),
 });
+
+// ═══════════════════════════════════════════════════════
+// ── RELATIONS ──────────────────────────────────────────
+// Memungkinkan penggunaan db.query.*.findMany({ with: {...} })
+// ═══════════════════════════════════════════════════════
+
+export const usersRelations = relations(users, ({ many }) => ({
+  transaksiSebagaiPetugas: many(transaksi),
+  auditLogs: many(auditLog),
+  notifications: many(notifications),
+}));
+
+export const wargaRelations = relations(warga, ({ many }) => ({
+  transaksi: many(transaksi),
+  qrCodes: many(qrCodes),
+}));
+
+export const transaksiRelations = relations(transaksi, ({ one, many }) => ({
+  warga: one(warga, {
+    fields: [transaksi.wargaId],
+    references: [warga.id],
+  }),
+  petugas: one(users, {
+    fields: [transaksi.petugasId],
+    references: [users.id],
+  }),
+  kasEntries: many(kasKarangtaruna),
+}));
+
+export const kasKarangtarunaRelations = relations(kasKarangtaruna, ({ one }) => ({
+  transaksi: one(transaksi, {
+    fields: [kasKarangtaruna.transaksiId],
+    references: [transaksi.id],
+  }),
+}));
+
+export const qrCodesRelations = relations(qrCodes, ({ one }) => ({
+  warga: one(warga, {
+    fields: [qrCodes.wargaId],
+    references: [warga.id],
+  }),
+}));
+
+export const auditLogRelations = relations(auditLog, ({ one }) => ({
+  user: one(users, {
+    fields: [auditLog.userId],
+    references: [users.id],
+  }),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  sender: one(users, {
+    fields: [notifications.senderId],
+    references: [users.id],
+  }),
+}));

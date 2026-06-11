@@ -52,8 +52,6 @@ export async function POST(request: Request) {
     let isValid = false;
     if (user.password) {
       isValid = await bcrypt.compare(password, user.password);
-    } else if (password === 'admin123') { // Fallback for old accounts
-      isValid = true;
     }
 
     if (!isValid) {

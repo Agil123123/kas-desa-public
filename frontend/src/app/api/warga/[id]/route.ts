@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db, warga } from '@kas/backend';
 import { eq } from 'drizzle-orm';
+import { requireAuth } from '@/lib/auth';
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -11,6 +12,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const auth = await requireAuth('Admin');
+    if (!auth.success) return auth.response;
+
     const { id } = await params;
     const body = await req.json();
     const nik = body.nik || `NO-NIK-${Date.now()}`;
@@ -29,8 +33,15 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  await db.delete(warga).where(eq(warga.id, id));
-  return NextResponse.json({ success: true });
-}
+  try {
+    const auth = await requireAuth('Super Admin');
+    if (!auth.success) return auth.response;
 
+    const { id } = await params;
+    await db.delete(warga).where(eq(warga.id, id));
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('API Error:', error);
+    return NextResponse.json({ error: 'Terjadi kesalahan internal pada server' }, { status: 500 });
+  }
+}

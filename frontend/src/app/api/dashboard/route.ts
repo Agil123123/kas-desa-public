@@ -4,60 +4,37 @@ import { sql, eq } from 'drizzle-orm';
 
 export async function GET() {
   try {
-    const totalWarga = await db.select({ count: sql<number>`count(*)` }).from(warga);
-    
-    // Fetch all transactions for Jimpitan
-    const allJimpitan = await db.select().from(transaksi).where(sql`kategori = 'Kas Jimpitan'`);
-    // Fetch all Kas Karangtaruna
-    const allKas = await db.select().from(kasKarangtaruna);
+    // ── Total Warga ──────────────────────────────────────
+    const [{ count: totalWarga }] = await db.select({
+      count: sql<number>`count(*)`
+    }).from(warga);
 
-    const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    
-    // Get start of week (Monday)
-    const dayOfWeek = now.getDay() || 7; 
-    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 1).getTime();
-    
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    const startOfYear = new Date(now.getFullYear(), 0, 1).getTime();
+    // ── Jimpitan Stats (SQL Aggregation — no full-table scan) ──
+    const [jimpitanAgg] = await db.select({
+      totalMasuk: sql<number>`COALESCE(SUM(CASE WHEN jenis='Masuk' THEN nominal ELSE 0 END), 0)`,
+      totalKeluar: sql<number>`COALESCE(SUM(CASE WHEN jenis='Keluar' THEN nominal ELSE 0 END), 0)`,
+      masukHariIni: sql<number>`COALESCE(SUM(CASE WHEN jenis='Masuk' AND tanggal >= date('now','localtime') THEN nominal ELSE 0 END), 0)`,
+      keluarHariIni: sql<number>`COALESCE(SUM(CASE WHEN jenis='Keluar' AND tanggal >= date('now','localtime') THEN nominal ELSE 0 END), 0)`,
+      masukMingguIni: sql<number>`COALESCE(SUM(CASE WHEN jenis='Masuk' AND tanggal >= date('now','weekday 1','-7 days','localtime') THEN nominal ELSE 0 END), 0)`,
+      keluarMingguIni: sql<number>`COALESCE(SUM(CASE WHEN jenis='Keluar' AND tanggal >= date('now','weekday 1','-7 days','localtime') THEN nominal ELSE 0 END), 0)`,
+      masukBulanIni: sql<number>`COALESCE(SUM(CASE WHEN jenis='Masuk' AND tanggal >= date('now','start of month','localtime') THEN nominal ELSE 0 END), 0)`,
+      keluarBulanIni: sql<number>`COALESCE(SUM(CASE WHEN jenis='Keluar' AND tanggal >= date('now','start of month','localtime') THEN nominal ELSE 0 END), 0)`,
+      masukTahunIni: sql<number>`COALESCE(SUM(CASE WHEN jenis='Masuk' AND tanggal >= date('now','start of year','localtime') THEN nominal ELSE 0 END), 0)`,
+      keluarTahunIni: sql<number>`COALESCE(SUM(CASE WHEN jenis='Keluar' AND tanggal >= date('now','start of year','localtime') THEN nominal ELSE 0 END), 0)`,
+    })
+    .from(transaksi)
+    .where(sql`kategori = 'Kas Jimpitan'`);
 
-    // Helper to aggregate amounts by time period, filtered by jenis
-    const aggregateByJenis = (data: any[], dateField: string, amountField: string, jenisFilter: string) => {
-      let today = 0, week = 0, month = 0, year = 0, total = 0;
-      data.forEach(item => {
-        if (item.jenis !== jenisFilter) return;
-        const d = new Date(item[dateField]).getTime();
-        const amt = Number(item[amountField]) || 0;
-        total += amt;
-        if (d >= startOfDay) today += amt;
-        if (d >= startOfWeek) week += amt;
-        if (d >= startOfMonth) month += amt;
-        if (d >= startOfYear) year += amt;
-      });
-      return { today, week, month, year, total };
-    };
+    // ── Kas Karangtaruna Stats (SQL Aggregation) ──────────
+    const [kasAgg] = await db.select({
+      totalMasuk: sql<number>`COALESCE(SUM(CASE WHEN jenis='Masuk' THEN nominal ELSE 0 END), 0)`,
+      totalKeluar: sql<number>`COALESCE(SUM(CASE WHEN jenis='Keluar' THEN nominal ELSE 0 END), 0)`,
+      masukBulanIni: sql<number>`COALESCE(SUM(CASE WHEN jenis='Masuk' AND tanggal >= date('now','start of month','localtime') THEN nominal ELSE 0 END), 0)`,
+      keluarBulanIni: sql<number>`COALESCE(SUM(CASE WHEN jenis='Keluar' AND tanggal >= date('now','start of month','localtime') THEN nominal ELSE 0 END), 0)`,
+    })
+    .from(kasKarangtaruna);
 
-    // Jimpitan: pemasukan & pengeluaran
-    const jimpitanMasuk = aggregateByJenis(allJimpitan, 'tanggal', 'nominal', 'Masuk');
-    const jimpitanKeluar = aggregateByJenis(allJimpitan, 'tanggal', 'nominal', 'Keluar');
-    // Combined jimpitan stats (for backward compat): today/week/month/year = pemasukan only, total = pemasukan - pengeluaran
-    const jimpitanStats = {
-      today: jimpitanMasuk.today,
-      week: jimpitanMasuk.week,
-      month: jimpitanMasuk.month,
-      year: jimpitanMasuk.year,
-      total: jimpitanMasuk.total - jimpitanKeluar.total,
-    };
-
-    // Kas Karangtaruna: pemasukan & pengeluaran
-    const kasMasukStats = aggregateByJenis(allKas, 'tanggal', 'nominal', 'Masuk');
-    const kasKeluarStats = aggregateByJenis(allKas, 'tanggal', 'nominal', 'Keluar');
-
-    // Dynamic saldo: total pemasukan - total pengeluaran
-    const saldoKasDynamic = kasMasukStats.total - kasKeluarStats.total;
-    const saldoJimpitanDynamic = jimpitanMasuk.total - jimpitanKeluar.total;
-
-    // Total jimpitan per RT
+    // ── Jimpitan per RT ──────────────────────────────────
     const jimpitanPerRt = await db.select({
       rt: warga.rt,
       total: sql<number>`COALESCE(SUM(${transaksi.nominal}), 0)`,
@@ -67,7 +44,7 @@ export async function GET() {
     .where(sql`kategori = 'Kas Jimpitan' AND jenis = 'Masuk'`)
     .groupBy(warga.rt);
 
-    // Count Warga per RT
+    // ── Warga per RT ─────────────────────────────────────
     const wargaPerRt = await db.select({
       rt: warga.rt,
       count: sql<number>`count(*)`,
@@ -75,20 +52,56 @@ export async function GET() {
     .from(warga)
     .groupBy(warga.rt);
 
-    // Get Pengaturan for Target Jimpitan
+    // ── Target Jimpitan ──────────────────────────────────
     const { pengaturan } = await import('@kas/backend');
     const settings = await db.select().from(pengaturan).limit(1);
     const targetPerKk = settings.length > 0 ? settings[0].targetJimpitan : 30000;
 
+    // ── Build response (backward compatible) ─────────────
+    const jimpitanMasuk = {
+      today: jimpitanAgg.masukHariIni,
+      week: jimpitanAgg.masukMingguIni,
+      month: jimpitanAgg.masukBulanIni,
+      year: jimpitanAgg.masukTahunIni,
+      total: jimpitanAgg.totalMasuk,
+    };
+    const jimpitanKeluar = {
+      today: jimpitanAgg.keluarHariIni,
+      week: jimpitanAgg.keluarMingguIni,
+      month: jimpitanAgg.keluarBulanIni,
+      year: jimpitanAgg.keluarTahunIni,
+      total: jimpitanAgg.totalKeluar,
+    };
+    const jimpitanStats = {
+      today: jimpitanMasuk.today,
+      week: jimpitanMasuk.week,
+      month: jimpitanMasuk.month,
+      year: jimpitanMasuk.year,
+      total: jimpitanMasuk.total - jimpitanKeluar.total,
+    };
+
+    const kasMasukStats = {
+      today: 0, week: 0,
+      month: kasAgg.masukBulanIni,
+      year: 0,
+      total: kasAgg.totalMasuk,
+    };
+    const kasKeluarStats = {
+      today: 0, week: 0,
+      month: kasAgg.keluarBulanIni,
+      year: 0,
+      total: kasAgg.totalKeluar,
+    };
+
     return NextResponse.json({
-      totalWarga: totalWarga[0].count,
+      totalWarga,
       jimpitanStats,
       jimpitanMasukStats: jimpitanMasuk,
       jimpitanKeluarStats: jimpitanKeluar,
       kasMasukStats,
       kasKeluarStats,
-      saldoKasKarangtaruna: saldoKasDynamic,
-      totalJimpitanKeseluruhan: saldoJimpitanDynamic,
+      saldoKasKarangtaruna: kasAgg.totalMasuk - kasAgg.totalKeluar,
+      totalJimpitanKeseluruhan: jimpitanAgg.totalMasuk - jimpitanAgg.totalKeluar,
       jimpitanPerRt,
       wargaPerRt,
       targetPerKk,

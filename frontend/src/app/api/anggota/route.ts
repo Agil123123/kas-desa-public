@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db, anggota } from '@kas/backend';
 import { eq } from 'drizzle-orm';
+import { requireAuth } from '@/lib/auth';
+import { generateId } from '@/lib/id';
 
 export async function GET() {
   try {
@@ -14,8 +16,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAuth('Admin');
+    if (!auth.success) return auth.response;
+
     const body = await request.json();
-    const id = `agt-${Date.now()}`;
+    const id = generateId('agt');
     await db.insert(anggota).values({
       id,
       nama: body.nama,
@@ -29,4 +34,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Terjadi kesalahan internal pada server' }, { status: 500 });
   }
 }
-

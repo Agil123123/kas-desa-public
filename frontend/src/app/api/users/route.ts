@@ -2,9 +2,14 @@ import { NextResponse } from 'next/server';
 import { db, users } from '@kas/backend';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
+import { requireAuth } from '@/lib/auth';
+import { generateId } from '@/lib/id';
 
 export async function GET() {
   try {
+    const auth = await requireAuth('Admin');
+    if (!auth.success) return auth.response;
+
     const data = await db.select().from(users).orderBy(users.name);
     return NextResponse.json(data);
   } catch (error: any) {
@@ -15,10 +20,12 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAuth('Super Admin');
+    if (!auth.success) return auth.response;
+
     const body = await request.json();
-    const id = `usr-${Date.now()}`;
+    const id = generateId('usr');
     
-    // Hash password if provided
     let hashedPassword = '';
     if (body.password) {
       const salt = await bcrypt.genSalt(10);
@@ -40,4 +47,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Terjadi kesalahan internal pada server' }, { status: 500 });
   }
 }
-

@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import { db, kasKarangtaruna, transaksi } from '@kas/backend';
 import { eq } from 'drizzle-orm';
+import { requireAuth } from '@/lib/auth';
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const auth = await requireAuth('Bendahara');
+    if (!auth.success) return auth.response;
+
     const { id } = await params;
     
     // Get the record first to find the transaksiId
@@ -27,4 +31,3 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: 'Terjadi kesalahan internal' }, { status: 500 });
   }
 }
-

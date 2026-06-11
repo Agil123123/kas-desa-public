@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
-import { db, transaksi, kasKarangtaruna, users, auditLog } from '@kas/backend';
+import { db, transaksi, kasKarangtaruna, auditLog } from '@kas/backend';
 import { eq } from 'drizzle-orm';
-import { cookies } from 'next/headers';
+import { requireAuth } from '@/lib/auth';
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAuth('Petugas');
+  if (!auth.success) return auth.response;
+
   const { id } = await params;
   const data = await db.select().from(transaksi).where(eq(transaksi.id, id));
   if (!data.length) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -12,6 +15,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const auth = await requireAuth('Super Admin');
+    if (!auth.success) return auth.response;
+
     const { id } = await params;
     const body = await req.json();
     await db.update(transaksi).set({
@@ -30,17 +36,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
+    const auth = await requireAuth('Super Admin');
+    if (!auth.success) return auth.response;
 
-    // Verify Super Admin
-    const sessionToken = (await cookies()).get('session_token')?.value;
-    if (!sessionToken) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    const currentUser = await db.select().from(users).where(eq(users.sessionToken, sessionToken));
-    if (!currentUser.length || currentUser[0].role !== 'Super Admin') {
-      return NextResponse.json({ error: 'Hanya Super Admin yang dapat menghapus transaksi' }, { status: 403 });
-    }
+    const { id } = await params;
 
     // Get transaction details before deletion (for audit log)
     const trxData = await db.select().from(transaksi).where(eq(transaksi.id, id));
@@ -70,7 +69,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     try {
       await db.insert(auditLog).values({
         id: `log-${Date.now()}`,
-        userId: currentUser[0].id,
+        userId: auth.user.id,
         aksi: 'DELETE',
         tabel: 'transaksi',
         keterangan: `Menghapus transaksi ${trx.noTransaksi} (Rp ${trx.nominal}) - ${trx.kategori}`,

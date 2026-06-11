@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server';
 import { db, users } from '@kas/backend';
 import { eq } from 'drizzle-orm';
-
 import bcrypt from 'bcryptjs';
+import { requireAuth } from '@/lib/auth';
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const auth = await requireAuth('Super Admin');
+    if (!auth.success) return auth.response;
+
     const { id } = await params;
     const body = await req.json();
     
-    let updateData: any = {
+    const updateData: Record<string, any> = {
       name: body.name,
       email: body.email,
       role: body.role,
@@ -31,8 +34,15 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  await db.delete(users).where(eq(users.id, id));
-  return NextResponse.json({ success: true });
-}
+  try {
+    const auth = await requireAuth('Super Admin');
+    if (!auth.success) return auth.response;
 
+    const { id } = await params;
+    await db.delete(users).where(eq(users.id, id));
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('API Error:', error);
+    return NextResponse.json({ error: 'Terjadi kesalahan internal pada server' }, { status: 500 });
+  }
+}
