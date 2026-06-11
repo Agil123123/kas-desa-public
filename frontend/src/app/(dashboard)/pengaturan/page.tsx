@@ -38,6 +38,23 @@ export default function PengaturanPage() {
     }
   };
 
+  const handleTestConnection = async () => {
+    setSavingSettings(true);
+    try {
+      const res = await fetch('/api/pengaturan/test-sheets', { method: 'POST' });
+      const data = await res.json();
+      setSavingSettings(false);
+      if (!res.ok) {
+        alert(data.error || 'Gagal mengetes koneksi.');
+      } else {
+        alert(data.message || 'Koneksi berhasil!');
+      }
+    } catch (e) {
+      setSavingSettings(false);
+      alert('Gagal menghubungi server untuk tes koneksi.');
+    }
+  };
+
   // ── Master RT ──────────────────────────────────────
   const [rtList, setRtList] = useState<RtItem[]>([]);
   const [showRtModal, setShowRtModal] = useState(false);
@@ -346,7 +363,7 @@ export default function PengaturanPage() {
                 </div>
                 <div className="flex gap-3 pt-2">
                   <button onClick={handleSaveSettings} disabled={savingSettings} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-md shadow-blue-500/20 disabled:opacity-50">{savingSettings ? 'Menyimpan...' : 'Simpan Konfigurasi'}</button>
-                  <button onClick={() => alert('Fitur tes koneksi akan diimplementasikan.')} className="px-5 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium rounded-lg transition-colors">Tes Koneksi</button>
+                  <button onClick={handleTestConnection} disabled={savingSettings} className="px-5 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium rounded-lg transition-colors disabled:opacity-50">Tes Koneksi</button>
                 </div>
               </div>
             </div>
