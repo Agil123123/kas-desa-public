@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 
-export default function DetailWargaPage({ params }: { params: { id: string } }) {
+export default function DetailWargaPage() {
   const router = useRouter();
-  const { id } = params;
+  const params = useParams();
+  const id = params.id as string;
   
   const [warga, setWarga] = useState<any>(null);
   const [riwayat, setRiwayat] = useState<any[]>([]);

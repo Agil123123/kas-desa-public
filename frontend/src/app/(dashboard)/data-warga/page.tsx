@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import Link from "next/link";
 
 type Warga = {
   id: string;

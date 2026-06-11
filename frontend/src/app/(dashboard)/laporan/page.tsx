@@ -85,7 +85,6 @@ export default function LaporanPage() {
         });
         setRekapRT(formattedRt);
       }
-      }
     } catch (e) {
       console.error(e);
     }
@@ -135,7 +134,7 @@ export default function LaporanPage() {
           
           const ws = XLSX.utils.json_to_sheet(data);
           XLSX.utils.book_append_sheet(wb, ws, "Laporan Jimpitan");
-        } else {
+        } else if (activeReport === 'karangtaruna') {
           // Format data for Kas Karangtaruna Excel
           const data = filteredLedger.map(item => ({
             'Tanggal': item.tanggal ? item.tanggal.slice(0, 10) : '-',

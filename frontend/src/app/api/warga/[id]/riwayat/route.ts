@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@kas/backend/db';
 import { transaksi, warga } from '@kas/backend/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json({ error: 'ID Warga tidak ditemukan' }, { status: 400 });
