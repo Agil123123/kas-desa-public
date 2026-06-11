@@ -14,7 +14,8 @@ export async function GET() {
       rw: warga.rw,
       createdAt: warga.createdAt,
       jimpitanBulanIni: sql<number>`COALESCE(SUM(CASE WHEN ${transaksi.tanggal} >= date('now', 'start of month', 'localtime') THEN ${transaksi.nominal} ELSE 0 END), 0)`.mapWith(Number),
-      jimpitanMingguIni: sql<number>`COALESCE(SUM(CASE WHEN ${transaksi.tanggal} >= date('now', '-7 days', 'localtime') THEN ${transaksi.nominal} ELSE 0 END), 0)`.mapWith(Number)
+      jimpitanMingguIni: sql<number>`COALESCE(SUM(CASE WHEN ${transaksi.tanggal} >= date('now', '-7 days', 'localtime') THEN ${transaksi.nominal} ELSE 0 END), 0)`.mapWith(Number),
+      totalTransaksi: sql<number>`COUNT(${transaksi.id})`.mapWith(Number)
     })
     .from(warga)
     .leftJoin(transaksi, sql`${warga.id} = ${transaksi.wargaId} AND ${transaksi.kategori} = 'Kas Jimpitan' AND ${transaksi.jenis} = 'Masuk'`)

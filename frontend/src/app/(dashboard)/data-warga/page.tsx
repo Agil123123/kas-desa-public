@@ -12,6 +12,7 @@ type Warga = {
   rw: string;
   jimpitanMingguIni?: number;
   jimpitanBulanIni?: number;
+  totalTransaksi?: number;
 };
 
 type RtData = {
@@ -152,6 +153,7 @@ export default function DataWargaPage() {
                 <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
                   <th className="py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Warga</th>
                   <th className="hidden sm:table-cell py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">RT</th>
+                  <th className="hidden sm:table-cell py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Rutinitas</th>
                   <th className="py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jimpitan</th>
                   <th className="hidden md:table-cell py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kode QR</th>
                   <th className="py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Aksi</th>
@@ -176,6 +178,11 @@ export default function DataWargaPage() {
                     </td>
                     <td className="hidden sm:table-cell py-3 px-3 sm:py-4 sm:px-6">
                       <span className="px-2.5 py-1 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-lg font-medium text-xs">RT {item.rt}</span>
+                    </td>
+                    <td className="hidden sm:table-cell py-3 px-3 sm:py-4 sm:px-6 text-center">
+                      <span className="inline-flex items-center justify-center bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-lg font-bold text-xs px-2.5 py-1" title={`${item.totalTransaksi || 0} kali membayar jimpitan`}>
+                        {item.totalTransaksi || 0}x Setor
+                      </span>
                     </td>
                     <td className="py-3 px-3 sm:py-4 sm:px-6">
                       <div className="flex flex-col gap-0.5">
