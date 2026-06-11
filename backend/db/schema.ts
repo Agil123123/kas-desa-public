@@ -109,6 +109,13 @@ export const auditLog = sqliteTable('audit_log', {
   createdAt: text('created_at').default(sql`(datetime('now','localtime'))`),
 });
 
+// ── Login Attempts (Rate Limiting) ─────────────────────
+export const loginAttempts = sqliteTable('login_attempts', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  identifier: text('identifier').notNull(),
+  createdAt: text('created_at').default(sql`(datetime('now'))`),
+});
+
 // ═══════════════════════════════════════════════════════
 // ── RELATIONS ──────────────────────────────────────────
 // Memungkinkan penggunaan db.query.*.findMany({ with: {...} })

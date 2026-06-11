@@ -4,6 +4,8 @@ import { eq } from 'drizzle-orm';
 import { requireAuth } from '@/lib/auth';
 import { generateId } from '@/lib/id';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const data = await db.select().from(rt).orderBy(rt.nomor);

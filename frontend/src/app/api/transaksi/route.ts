@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
-import { db, transaksi, warga, users } from '@kas/backend';
+import { db, transaksi, warga, users, kasKarangtaruna, notifications } from '@kas/backend';
 import { eq, desc } from 'drizzle-orm';
 import { requireAuth } from '@/lib/auth';
 import { generateId } from '@/lib/id';
+import { transaksiSchema } from '@/lib/validation';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
@@ -47,46 +50,60 @@ export async function POST(request: Request) {
     if (!auth.success) return auth.response;
 
     const body = await request.json();
+
+    // ✅ FIX CRITICAL-2: Validate input with Zod (prevents negative nominals, invalid enums)
+    const parsed = transaksiSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validasi gagal', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+    const data = parsed.data;
+
     const id = generateId('trx');
-    const noTransaksi = `${body.kategori === 'Kas Jimpitan' ? 'JMP' : 'KAS'}-${Date.now().toString(36).toUpperCase()}`;
+    const noTransaksi = `${data.kategori === 'Kas Jimpitan' ? 'JMP' : 'KAS'}-${Date.now().toString(36).toUpperCase()}`;
     
     // petugasId diambil dari session, bukan dari body (lebih aman)
     const petugasId = auth.user.id;
-    
-    await db.insert(transaksi).values({
-      id,
-      noTransaksi,
-      wargaId: body.wargaId || null,
-      petugasId,
-      tanggal: body.tanggal || new Date().toISOString().slice(0, 16).replace('T', ' '),
-      nominal: body.nominal,
-      kategori: body.kategori || 'Kas Jimpitan',
-      jenis: body.jenis || 'Masuk',
-      uraian: body.uraian || '',
-      status: 'Success',
+
+    // ✅ FIX CRITICAL-4: Atomic transaction — both transaksi + kasKarangtaruna in one tx
+    await db.transaction(async (tx) => {
+      await tx.insert(transaksi).values({
+        id,
+        noTransaksi,
+        wargaId: data.wargaId || null,
+        petugasId,
+        tanggal: data.tanggal || new Date().toISOString().slice(0, 16).replace('T', ' '),
+        nominal: data.nominal,
+        kategori: data.kategori,
+        jenis: data.jenis,
+        uraian: data.uraian || '',
+        status: 'Success',
+      });
+
+      if (data.kategori === 'Kas Karangtaruna') {
+        const lastEntry = await tx.select().from(kasKarangtaruna)
+          .orderBy(desc(kasKarangtaruna.createdAt)).limit(1);
+        const lastSaldo = lastEntry.length > 0 ? lastEntry[0].saldoAkhir : 0;
+        const newSaldo = data.jenis === 'Masuk'
+          ? lastSaldo + data.nominal
+          : lastSaldo - data.nominal;
+
+        await tx.insert(kasKarangtaruna).values({
+          id: generateId('kr'),
+          transaksiId: id,
+          jenis: data.jenis,
+          nominal: data.nominal,
+          saldoAkhir: newSaldo,
+          uraian: data.uraian || '',
+          tanggal: data.tanggal || new Date().toISOString().slice(0, 16).replace('T', ' '),
+        });
+      }
     });
 
-    if ((body.kategori || 'Kas Jimpitan') === 'Kas Karangtaruna') {
-      const { kasKarangtaruna } = await import('@kas/backend');
-      const lastEntry = await db.select().from(kasKarangtaruna).orderBy(desc(kasKarangtaruna.createdAt)).limit(1);
-      const lastSaldo = lastEntry.length > 0 ? lastEntry[0].saldoAkhir : 0;
-      const newSaldo = (body.jenis || 'Masuk') === 'Masuk' ? lastSaldo + parseInt(body.nominal) : lastSaldo - parseInt(body.nominal);
-
-      await db.insert(kasKarangtaruna).values({
-        id: generateId('kr'),
-        transaksiId: id,
-        jenis: body.jenis || 'Masuk',
-        nominal: parseInt(body.nominal),
-        saldoAkhir: newSaldo,
-        uraian: body.uraian || '',
-        tanggal: body.tanggal || new Date().toISOString().slice(0, 16).replace('T', ' '),
-      });
-    }
-
-    // --- System Notification Trigger ---
+    // --- System Notification Trigger (non-critical, outside transaction) ---
     try {
-      const { notifications } = await import('@kas/backend');
-      
       const recentNotif = await db.select().from(notifications)
         .where(eq(notifications.senderId, petugasId))
         .orderBy(desc(notifications.createdAt))
@@ -104,7 +121,7 @@ export async function POST(request: Request) {
         await db.insert(notifications).values({
           id: generateId('notif'),
           title: 'Setoran Transaksi Baru',
-          message: `${auth.user.name} baru saja mulai menginput transaksi ${body.kategori}.`,
+          message: `${auth.user.name} baru saja mulai menginput transaksi ${data.kategori}.`,
           type: 'transaction',
           targetRole: 'Bendahara',
           senderId: petugasId,
@@ -118,6 +135,15 @@ export async function POST(request: Request) {
     return NextResponse.json(created[0], { status: 201 });
   } catch (error: any) {
     console.error('API Error:', error);
+
+    // ✅ Handle SQLITE_BUSY gracefully
+    if (error?.message?.includes('SQLITE_BUSY') || error?.code === 'SQLITE_BUSY') {
+      return NextResponse.json(
+        { error: 'Server sedang sibuk, silakan coba lagi dalam beberapa detik.' },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json({ error: 'Terjadi kesalahan internal pada server' }, { status: 500 });
   }
 }

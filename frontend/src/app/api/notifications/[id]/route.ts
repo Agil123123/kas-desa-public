@@ -3,6 +3,8 @@ import { db, notifications } from '@kas/backend';
 import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
 
+export const dynamic = 'force-dynamic';
+
 export async function PUT(req: Request, { params }: { params: any }) {
   try {
     const cookieStore = await cookies();

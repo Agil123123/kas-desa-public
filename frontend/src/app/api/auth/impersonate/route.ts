@@ -3,6 +3,8 @@ import { db, users } from '@kas/backend';
 import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
@@ -33,22 +35,29 @@ export async function POST(request: Request) {
 
     const target = targetUser[0];
 
-    // Create new session token for the target user (or use existing)
+    // Create new session token for the target user
     const crypto = require('crypto');
     const sessionToken = `sess_${Date.now()}_${crypto.randomBytes(32).toString('hex')}`;
     
     // Save new session to target user
     await db.update(users).set({ sessionToken }).where(eq(users.id, target.id));
 
-    // End superadmin session locally by setting the cookie to target user's session
     const response = NextResponse.json({ message: 'Login sebagai pengguna berhasil' });
     
-    // Replace the session cookie
+    // ✅ FIX CRITICAL-5: Store original admin session so they can "go back"
     response.cookies.set('session_token', sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7 // 1 week
+      maxAge: 60 * 60, // 1 hour max for impersonation
+    });
+
+    // ✅ Preserve the admin's original session in a separate cookie
+    response.cookies.set('original_admin_session', currentSession, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60, // 1 hour
     });
 
     return response;

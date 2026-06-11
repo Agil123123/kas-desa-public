@@ -55,13 +55,27 @@ export default function RiwayatTransaksiPage() {
   };
 
   // Filter Logic
+  // ✅ FIX MEDIUM-3: Search filter now applies to ALL views, not just when time filter is active
   const getFilteredData = () => {
-    if (filterWaktu === "Semua Waktu") return transactions;
-
-    const now = new Date();
     return transactions.filter(trx => {
+      // Apply search filter FIRST (always, regardless of time filter)
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const nama = trx.namaWarga?.toLowerCase() || '';
+        const uraian = trx.uraian?.toLowerCase() || '';
+        const kategori = trx.kategori?.toLowerCase() || '';
+        const nominalStr = trx.nominal?.toString() || '';
+        if (!nama.includes(q) && !uraian.includes(q) && !kategori.includes(q) && !nominalStr.includes(q)) {
+          return false;
+        }
+      }
+
+      // Then apply time filter
+      if (filterWaktu === "Semua Waktu") return true;
+
       if (!trx.tanggal) return false;
       const trxDate = new Date(trx.tanggal);
+      const now = new Date();
 
       if (filterWaktu === "Bulan Ini") {
         return trxDate.getMonth() === now.getMonth() && trxDate.getFullYear() === now.getFullYear();
@@ -77,17 +91,6 @@ export default function RiwayatTransaksiPage() {
         const trxDateStr = trx.tanggal.slice(0, 10);
         if (startDate && trxDateStr < startDate) return false;
         if (endDate && trxDateStr > endDate) return false;
-      }
-
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        const nama = trx.namaWarga?.toLowerCase() || '';
-        const uraian = trx.uraian?.toLowerCase() || '';
-        const kategori = trx.kategori?.toLowerCase() || '';
-        const nominalStr = trx.nominal?.toString() || '';
-        if (!nama.includes(q) && !uraian.includes(q) && !kategori.includes(q) && !nominalStr.includes(q)) {
-          return false;
-        }
       }
 
       return true;

@@ -3,6 +3,8 @@ import { db, warga } from '@kas/backend';
 import { eq } from 'drizzle-orm';
 import { requireAuth } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const data = await db.select().from(warga).where(eq(warga.id, id));

@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { db, users, pengaturan } from '@kas/backend';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
+import { generateId } from '@/lib/id';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
@@ -31,7 +34,8 @@ export async function POST(request: Request) {
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
-    const id = `usr-${Date.now()}`;
+    // ✅ FIX MEDIUM-2: Use collision-safe generateId() instead of Date.now()
+    const id = generateId('usr');
 
     // Create user (Pending approval)
     await db.insert(users).values({

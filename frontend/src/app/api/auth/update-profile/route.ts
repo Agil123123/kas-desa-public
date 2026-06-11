@@ -4,6 +4,8 @@ import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
@@ -36,16 +38,24 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Kata sandi lama harus diisi untuk mengubah sandi' }, { status: 400 });
       }
 
-      // Verify old password
-      let isOldValid = false;
-      if (user.password) {
-        isOldValid = await bcrypt.compare(oldPassword, user.password);
-      } else if (oldPassword === 'admin123') {
-        isOldValid = true;
+      // ✅ FIX CRITICAL-1: Removed hardcoded 'admin123' backdoor.
+      // If user has no password hash, they must contact admin.
+      if (!user.password) {
+        return NextResponse.json(
+          { error: 'Akun belum memiliki password. Hubungi admin untuk reset password.' },
+          { status: 400 }
+        );
       }
+
+      const isOldValid = await bcrypt.compare(oldPassword, user.password);
 
       if (!isOldValid) {
         return NextResponse.json({ error: 'Kata sandi lama salah' }, { status: 400 });
+      }
+
+      // Validate new password minimum length
+      if (newPassword.length < 6) {
+        return NextResponse.json({ error: 'Kata sandi baru minimal 6 karakter' }, { status: 400 });
       }
 
       // Hash new password

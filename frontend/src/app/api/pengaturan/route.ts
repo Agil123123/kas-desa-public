@@ -3,6 +3,8 @@ import { db, pengaturan } from '@kas/backend';
 import { eq } from 'drizzle-orm';
 import { requireAuth } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const data = await db.select().from(pengaturan).limit(1);

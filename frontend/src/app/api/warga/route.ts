@@ -4,8 +4,14 @@ import { eq, sql } from 'drizzle-orm';
 import { requireAuth } from '@/lib/auth';
 import { generateId } from '@/lib/id';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
+    // ✅ FIX HIGH-4: Warga data (including NIK) requires authentication
+    const auth = await requireAuth('Petugas');
+    if (!auth.success) return auth.response;
+
     const data = await db.select({
       id: warga.id,
       kodeUnik: warga.kodeUnik,

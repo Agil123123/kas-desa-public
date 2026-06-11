@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 type KasEntry = {
   id: string;
@@ -27,6 +27,8 @@ export default function KasKarangtarunaPage() {
   const [petugasId, setPetugasId] = useState("");
   const [userRole, setUserRole] = useState("Anggota");
   const [searchQuery, setSearchQuery] = useState("");
+  // ✅ FIX HIGH-1: Ref-based guard prevents double submission
+  const savingRef = useRef(false);
 
   const fetchLedger = useCallback(async () => {
     setLoading(true);
@@ -95,13 +97,14 @@ export default function KasKarangtarunaPage() {
   };
 
   const handleSave = async () => {
-    if (!form.nominal || !form.uraian) return;
+    if (!form.nominal || !form.uraian || savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     try {
       // POST /api/transaksi will automatically create the matching kas_karangtaruna entry
 
       // Also create matching transaksi
-      await fetch('/api/transaksi', {
+      const res = await fetch('/api/transaksi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -114,13 +117,21 @@ export default function KasKarangtarunaPage() {
         }),
       });
 
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || 'Gagal menyimpan transaksi.');
+        return;
+      }
+
       setShowModal(false);
       setForm({ jenis: 'Masuk', nominal: '', uraian: '', tanggal: '' });
       fetchLedger();
     } catch (e) {
       alert('Gagal menyimpan transaksi.');
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleDelete = async (id: string) => {

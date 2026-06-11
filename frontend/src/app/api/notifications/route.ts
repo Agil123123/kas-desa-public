@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { db, notifications, users } from '@kas/backend';
 import { desc, eq, or } from 'drizzle-orm';
 import { cookies } from 'next/headers';
+import { generateId } from '@/lib/id';
+
+export const dynamic = 'force-dynamic';
 
 async function getUserFromSession() {
   const cookieStore = await cookies();
@@ -38,13 +41,13 @@ export async function GET(req: Request) {
         
         const hasSummary = existingSummary.some(n => n.title.includes(`Rekap Kas Bulan ${monthYear}`));
         if (!hasSummary) {
-          // Generate a mock summary (in a real app, query sum of nominal)
           await db.insert(notifications).values({
-            id: `notif-sys-${Date.now()}`,
+            // ✅ FIX MEDIUM-2: Use generateId() instead of Date.now()
+            id: generateId('notif'),
             title: `Rekap Kas Bulan ${monthYear} Telah Selesai`,
             message: `Bulan hampir berakhir. Mohon periksa buku besar Kas Karangtaruna dan Kas Jimpitan untuk memastikan seluruh transaksi sudah klop.`,
             type: 'system',
-            targetRole: 'Bendahara', // target Bendahara
+            targetRole: 'Bendahara',
             senderId: null,
           });
         }
@@ -79,7 +82,8 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const id = `notif-${Date.now()}`;
+    // ✅ FIX MEDIUM-2: Use generateId() instead of Date.now()
+    const id = generateId('notif');
     
     await db.insert(notifications).values({
       id,

@@ -4,24 +4,21 @@ import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { cookies } from 'next/headers';
+import { checkRateLimit, recordLoginAttempt, clearLoginAttempts, cleanupOldAttempts } from '@/lib/rate-limit';
 
-// Simple in-memory rate limiter (in production, use Redis or DB)
-const loginAttempts = new Map<string, { count: number, resetTime: number }>();
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
     const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
-    const now = Date.now();
-    
-    // Check rate limit
-    if (loginAttempts.has(ip)) {
-      const attempts = loginAttempts.get(ip)!;
-      if (now > attempts.resetTime) {
-        // Reset after 15 minutes
-        loginAttempts.delete(ip);
-      } else if (attempts.count >= 5) {
-        return NextResponse.json({ error: 'Terlalu banyak percobaan masuk, silakan coba lagi nanti.' }, { status: 429 });
-      }
+
+    // ✅ FIX HIGH-2: Database-backed rate limiter (survives Vercel cold starts)
+    const rateCheck = await checkRateLimit(ip);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { error: 'Terlalu banyak percobaan masuk, silakan coba lagi nanti.' },
+        { status: 429 }
+      );
     }
 
     const body = await request.json();
@@ -34,10 +31,7 @@ export async function POST(request: Request) {
     // Find user
     const existing = await db.select().from(users).where(eq(users.email, email));
     if (existing.length === 0) {
-      // Record failed attempt
-      const attempts = loginAttempts.get(ip) || { count: 0, resetTime: now + 15 * 60 * 1000 };
-      attempts.count++;
-      loginAttempts.set(ip, attempts);
+      await recordLoginAttempt(ip);
       return NextResponse.json({ error: 'Email atau password salah' }, { status: 401 });
     }
 
@@ -55,15 +49,13 @@ export async function POST(request: Request) {
     }
 
     if (!isValid) {
-      // Record failed attempt
-      const attempts = loginAttempts.get(ip) || { count: 0, resetTime: now + 15 * 60 * 1000 };
-      attempts.count++;
-      loginAttempts.set(ip, attempts);
+      await recordLoginAttempt(ip);
       return NextResponse.json({ error: 'Email atau password salah' }, { status: 401 });
     }
 
-    // Clear failed attempts on success
-    loginAttempts.delete(ip);
+    // Clear failed attempts on success + cleanup old entries
+    await clearLoginAttempts(ip);
+    cleanupOldAttempts().catch(console.error); // fire-and-forget cleanup
 
     // Create session token securely
     const sessionToken = `sess_${Date.now()}_${crypto.randomBytes(32).toString('hex')}`;

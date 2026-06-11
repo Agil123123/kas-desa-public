@@ -3,6 +3,8 @@ import { db } from '@kas/backend/db';
 import { transaksi, warga } from '@kas/backend/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;

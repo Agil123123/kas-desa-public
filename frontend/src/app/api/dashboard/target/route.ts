@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { db, pengaturan, warga, transaksi } from '@kas/backend';
 import { sql } from 'drizzle-orm';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     // 1. Get Target Per Warga

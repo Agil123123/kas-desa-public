@@ -3,6 +3,8 @@ import { db } from '@kas/backend/db';
 import { warga, transaksi } from '@kas/backend/db/schema';
 import { eq, and, like } from 'drizzle-orm';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);

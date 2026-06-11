@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server';
 import { db, transaksi, warga, kasKarangtaruna } from '@kas/backend';
 import { sql, eq } from 'drizzle-orm';
+import { requireAuth } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    // ✅ FIX HIGH-4: Dashboard API now requires authentication
+    const auth = await requireAuth('Petugas');
+    if (!auth.success) return auth.response;
+
     // ── Total Warga ──────────────────────────────────────
     const [{ count: totalWarga }] = await db.select({
       count: sql<number>`count(*)`
