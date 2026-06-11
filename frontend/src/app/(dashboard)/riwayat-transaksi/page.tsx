@@ -22,6 +22,7 @@ export default function RiwayatTransaksiPage() {
   const [endDate, setEndDate] = useState("");
   const [userRole, setUserRole] = useState("");
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchTransactions = useCallback(async () => {
     setLoading(true);
@@ -76,8 +77,19 @@ export default function RiwayatTransaksiPage() {
         const trxDateStr = trx.tanggal.slice(0, 10);
         if (startDate && trxDateStr < startDate) return false;
         if (endDate && trxDateStr > endDate) return false;
-        return true;
       }
+
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const nama = trx.namaWarga?.toLowerCase() || '';
+        const uraian = trx.uraian?.toLowerCase() || '';
+        const kategori = trx.kategori?.toLowerCase() || '';
+        const nominalStr = trx.nominal?.toString() || '';
+        if (!nama.includes(q) && !uraian.includes(q) && !kategori.includes(q) && !nominalStr.includes(q)) {
+          return false;
+        }
+      }
+
       return true;
     });
   };
@@ -107,6 +119,13 @@ export default function RiwayatTransaksiPage() {
               <option value="Tahun Ini">Tahun Ini</option>
               <option value="Rentang Kustom">Rentang Kustom (Kalender)</option>
             </select>
+            <input 
+              type="text" 
+              placeholder="Cari transaksi..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white shadow-sm w-full sm:w-48"
+            />
             <button onClick={() => {
               import('@/utils/exportToExcel').then(m => m.exportToExcel(filteredData, 'Riwayat_Transaksi', 'Transaksi'));
             }} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2">

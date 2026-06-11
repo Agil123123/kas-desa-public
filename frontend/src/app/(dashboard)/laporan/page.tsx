@@ -24,6 +24,7 @@ export default function LaporanPage() {
   const [rekapRT, setRekapRT] = useState<any[]>([]);
   const [totalJimpitan, setTotalJimpitan] = useState(0);
   const [dashboardData, setDashboardData] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Warga Report State
   const [reportMonth, setReportMonth] = useState((new Date().getMonth() + 1).toString().padStart(2, '0'));
@@ -113,6 +114,15 @@ export default function LaporanPage() {
     const trxDate = item.tanggal.slice(0, 10);
     if (startDate && trxDate < startDate) return false;
     if (endDate && trxDate > endDate) return false;
+    
+    if (searchQuery) {
+       const q = searchQuery.toLowerCase();
+       const uraian = item.uraian?.toLowerCase() || '';
+       const jenis = item.jenis?.toLowerCase() || '';
+       const nominalStr = item.nominal?.toString() || '';
+       if (!uraian.includes(q) && !jenis.includes(q) && !nominalStr.includes(q)) return false;
+    }
+    
     return true;
   });
 
@@ -340,7 +350,11 @@ export default function LaporanPage() {
                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Riwayat Transaksi</h3>
                  <p className="text-sm text-gray-500 dark:text-gray-400">Filter transaksi berdasarkan rentang tanggal.</p>
                </div>
-               <div className="flex items-center gap-3">
+               <div className="flex flex-wrap items-center gap-3">
+                 <div>
+                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Cari</label>
+                   <input type="text" placeholder="Kata kunci..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500 outline-none w-full sm:w-48" />
+                 </div>
                  <div>
                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tanggal Mulai</label>
                    <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500 outline-none" />
@@ -350,8 +364,8 @@ export default function LaporanPage() {
                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tanggal Selesai</label>
                    <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500 outline-none" />
                  </div>
-                 {(startDate || endDate) && (
-                   <button onClick={() => { setStartDate(''); setEndDate(''); }} className="mt-5 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">Reset</button>
+                 {(startDate || endDate || searchQuery) && (
+                   <button onClick={() => { setStartDate(''); setEndDate(''); setSearchQuery(''); }} className="mt-5 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">Reset</button>
                  )}
                </div>
             </div>

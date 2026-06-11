@@ -12,6 +12,7 @@ export default function DetailWargaPage() {
   const [warga, setWarga] = useState<any>(null);
   const [riwayat, setRiwayat] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchData = useCallback(async () => {
     try {
@@ -48,6 +49,15 @@ export default function DetailWargaPage() {
   }
 
   if (!warga) return null;
+
+  const filteredRiwayat = riwayat.filter(item => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    const noTrx = item.noTransaksi?.toLowerCase() || '';
+    const nominalStr = item.nominal?.toString() || '';
+    const dateStr = item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).toLowerCase() : '';
+    return noTrx.includes(q) || nominalStr.includes(q) || dateStr.includes(q);
+  });
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -89,11 +99,18 @@ export default function DetailWargaPage() {
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+        <div className="p-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
             Riwayat Setoran Jimpitan
           </h3>
+          <input 
+            type="text" 
+            placeholder="Cari transaksi..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500 outline-none w-full sm:w-48"
+          />
         </div>
         
         <div className="overflow-x-auto">
@@ -107,7 +124,7 @@ export default function DetailWargaPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {riwayat.map((item) => (
+              {filteredRiwayat.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                   <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-300">
                     <div className="font-medium">{item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</div>
@@ -130,7 +147,7 @@ export default function DetailWargaPage() {
                   </td>
                 </tr>
               ))}
-              {riwayat.length === 0 && (
+              {filteredRiwayat.length === 0 && (
                 <tr>
                   <td colSpan={4} className="py-12 text-center text-gray-500 dark:text-gray-400">
                     <svg className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
