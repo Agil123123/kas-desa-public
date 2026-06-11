@@ -10,6 +10,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeRole, setActiveRole] = useState("Anggota");
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -37,8 +38,8 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} role={activeRole} />
-      <div className="flex-1 flex flex-col md:ml-64 min-w-0">
+      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} role={activeRole} isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'} min-w-0`}>
         <Header onMenuClick={() => setSidebarOpen(true)} role={activeRole} setRole={setActiveRole} />
         <main className="print:p-0 print:m-0 flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-950 p-4 sm:p-6 lg:p-8">
           {children}

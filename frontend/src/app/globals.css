@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
@@ -49,15 +51,13 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #020617;
-    --foreground: #f8fafc;
-    --primary: #10b981;
-    --primary-foreground: #ffffff;
-    --primary-dark: #34d399;
-    --primary-light: #064e3b;
-  }
+.dark {
+  --background: #020617;
+  --foreground: #f8fafc;
+  --primary: #10b981;
+  --primary-foreground: #ffffff;
+  --primary-dark: #34d399;
+  --primary-light: #064e3b;
 }
 
 body {

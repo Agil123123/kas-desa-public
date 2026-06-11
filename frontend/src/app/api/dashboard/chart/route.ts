@@ -6,14 +6,16 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const filter = searchParams.get('filter') || '8 Minggu';
-    const type = searchParams.get('type') || 'karangtaruna';
+    const type = searchParams.get('type') || 'combined';
 
-    let rawData: any[] = [];
+    let karangtarunaData: any[] = [];
+    let jimpitanData: any[] = [];
 
-    if (type === 'jimpitan') {
-      rawData = await db.select().from(transaksi).where(sql`kategori = 'Kas Jimpitan' AND (jenis = 'Masuk' OR jenis IS NULL)`);
-    } else {
-      rawData = await db.select().from(kasKarangtaruna).where(sql`jenis = 'Masuk'`);
+    if (type === 'jimpitan' || type === 'combined') {
+      jimpitanData = await db.select().from(transaksi).where(sql`kategori = 'Kas Jimpitan' AND (jenis = 'Masuk' OR jenis IS NULL)`);
+    }
+    if (type === 'karangtaruna' || type === 'combined') {
+      karangtarunaData = await db.select().from(kasKarangtaruna).where(sql`jenis = 'Masuk'`);
     }
 
     const now = new Date();
@@ -21,6 +23,27 @@ export async function GET(request: Request) {
     // Grouping helper
     const result: any[] = [];
     
+    const pushResult = (name: string, start: number, end: number) => {
+      let karangtaruna = 0;
+      let jimpitan = 0;
+
+      karangtarunaData.forEach(k => {
+        const time = new Date(k.tanggal || 0).getTime();
+        if (time >= start && time < end) karangtaruna += k.nominal;
+      });
+
+      jimpitanData.forEach(k => {
+        const time = new Date(k.tanggal || 0).getTime();
+        if (time >= start && time < end) jimpitan += k.nominal;
+      });
+
+      if (type === 'combined') {
+        result.push({ name, karangtaruna, jimpitan });
+      } else {
+        result.push({ name, amount: type === 'jimpitan' ? jimpitan : karangtaruna });
+      }
+    };
+
     if (filter === '1 Minggu') {
       const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
       
@@ -30,13 +53,7 @@ export async function GET(request: Request) {
         const startOfDay = d.getTime();
         const endOfDay = startOfDay + 86400000;
         
-        let amount = 0;
-        rawData.forEach(k => {
-          const time = new Date(k.tanggal || 0).getTime();
-          if (time >= startOfDay && time < endOfDay) amount += k.nominal;
-        });
-        
-        result.push({ name: dayName, amount });
+        pushResult(dayName, startOfDay, endOfDay);
       }
     } else if (filter === '6 Bulan') {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -46,13 +63,7 @@ export async function GET(request: Request) {
         const startOfMonth = d.getTime();
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 1).getTime();
         
-        let amount = 0;
-        rawData.forEach(k => {
-          const time = new Date(k.tanggal || 0).getTime();
-          if (time >= startOfMonth && time < endOfMonth) amount += k.nominal;
-        });
-        
-        result.push({ name: monthName, amount });
+        pushResult(monthName, startOfMonth, endOfMonth);
       }
     } else {
       // For 4 Minggu or 8 Minggu
@@ -61,13 +72,7 @@ export async function GET(request: Request) {
         const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (now.getDay()||7) + 1 - (i * 7)).getTime();
         const endOfWeek = startOfWeek + (7 * 86400000);
         
-        let amount = 0;
-        rawData.forEach(k => {
-          const time = new Date(k.tanggal || 0).getTime();
-          if (time >= startOfWeek && time < endOfWeek) amount += k.nominal;
-        });
-        
-        result.push({ name: `Mg ${weeksCount - i}`, amount });
+        pushResult(`Mg ${weeksCount - i}`, startOfWeek, endOfWeek);
       }
     }
 

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 type Notification = {
   id: string;
@@ -154,6 +155,8 @@ export default function Header({ onMenuClick, role = "Anggota", setRole }: { onM
           <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Hak Akses:</span>
           <span className="bg-transparent text-sm font-semibold text-emerald-600 dark:text-emerald-400 outline-none">{role}</span>
         </div>
+
+        <ThemeToggle />
 
         <div className="relative" ref={notifRef}>
           <button 

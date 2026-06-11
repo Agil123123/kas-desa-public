@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-export default function RevenueChart({ title = "Tren Pemasukan", type = "karangtaruna" }: { title?: string, type?: "karangtaruna" | "jimpitan" }) {
+export default function RevenueChart({ title = "Tren Pemasukan", type = "combined" }: { title?: string, type?: "karangtaruna" | "jimpitan" | "combined" }) {
   const [filter, setFilter] = useState("8 Minggu");
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,19 +24,33 @@ export default function RevenueChart({ title = "Tren Pemasukan", type = "karangt
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-emerald-100 dark:border-gray-700 p-3 rounded-xl shadow-lg shadow-emerald-500/10">
-          <p className="text-gray-500 dark:text-gray-400 text-xs font-medium mb-1">{label}</p>
-          <p className="text-emerald-600 dark:text-emerald-400 font-bold text-lg">
-            Rp {payload[0].value.toLocaleString('id-ID')}
-          </p>
+        <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-emerald-100 dark:border-gray-700 p-3 rounded-xl shadow-lg shadow-emerald-500/10 min-w-[200px]">
+          <p className="text-gray-500 dark:text-gray-400 text-xs font-medium mb-2">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <div key={index} className="flex justify-between items-center mb-1">
+              <span className="text-sm font-medium" style={{ color: entry.color }}>
+                {entry.name === "karangtaruna" ? "Karangtaruna" : entry.name === "jimpitan" ? "Jimpitan" : "Nominal"}
+              </span>
+              <span className="font-bold text-sm" style={{ color: entry.color }}>
+                Rp {entry.value.toLocaleString('id-ID')}
+              </span>
+            </div>
+          ))}
         </div>
       );
     }
     return null;
   };
 
-  const gradientColor = type === "karangtaruna" ? "#10b981" : "#3b82f6";
-  const gradientId = `colorAmount-${type}`;
+  const dataMax = Math.max(
+    ...data.map(d => Math.max(d.karangtaruna || 0, d.jimpitan || 0, d.amount || 0)),
+    0
+  );
+  const maxTick = Math.ceil(dataMax / 500000) * 500000 || 500000;
+  const ticks = [];
+  for (let i = 0; i <= maxTick; i += 500000) {
+    ticks.push(i);
+  }
 
   return (
     <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col">
@@ -64,14 +78,19 @@ export default function RevenueChart({ title = "Tren Pemasukan", type = "karangt
           </div>
         ) : null}
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart
+          <BarChart
             data={data}
-            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+            margin={{ top: 20, right: 10, left: 20, bottom: 0 }}
+            barGap={8}
           >
             <defs>
-              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={gradientColor} stopOpacity={0.4}/>
-                <stop offset="95%" stopColor={gradientColor} stopOpacity={0}/>
+              <linearGradient id="colorKarangtaruna" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#10b981" stopOpacity={1}/>
+                <stop offset="100%" stopColor="#10b981" stopOpacity={0.5}/>
+              </linearGradient>
+              <linearGradient id="colorJimpitan" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#3b82f6" stopOpacity={1}/>
+                <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.5}/>
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" className="dark:opacity-20" />
@@ -79,27 +98,28 @@ export default function RevenueChart({ title = "Tren Pemasukan", type = "karangt
               dataKey="name" 
               axisLine={false} 
               tickLine={false} 
-              tick={{ fill: '#9ca3af', fontSize: 12 }} 
+              tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 500 }} 
               dy={10}
             />
             <YAxis 
               axisLine={false} 
               tickLine={false} 
-              tick={{ fill: '#9ca3af', fontSize: 12 }}
-              tickFormatter={(value) => `Rp ${value >= 1000000 ? (value / 1000000) + 'M' : (value / 1000) + 'K'}`}
+              ticks={ticks}
+              domain={[0, maxTick]}
+              tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 500 }}
+              tickFormatter={(value) => value.toLocaleString('id-ID')}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: gradientColor, strokeWidth: 1, strokeDasharray: '4 4', fill: 'transparent' }} />
-            <Area 
-              type="monotone" 
-              dataKey="amount" 
-              stroke={gradientColor} 
-              strokeWidth={3}
-              fillOpacity={1} 
-              fill={`url(#${gradientId})`} 
-              activeDot={{ r: 6, fill: gradientColor, stroke: '#ffffff', strokeWidth: 2 }}
-              animationDuration={1500}
-            />
-          </AreaChart>
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(156, 163, 175, 0.1)' }} />
+            {type === 'combined' ? (
+              <>
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '13px', paddingTop: '20px' }} formatter={(value) => <span className="text-gray-700 dark:text-gray-300 ml-1 font-medium">{value === 'karangtaruna' ? 'Karangtaruna' : 'Jimpitan'}</span>} />
+                <Bar dataKey="karangtaruna" fill="url(#colorKarangtaruna)" radius={[6, 6, 0, 0]} animationDuration={1500} />
+                <Bar dataKey="jimpitan" fill="url(#colorJimpitan)" radius={[6, 6, 0, 0]} animationDuration={1500} />
+              </>
+            ) : (
+              <Bar dataKey="amount" fill={type === 'karangtaruna' ? 'url(#colorKarangtaruna)' : 'url(#colorJimpitan)'} radius={[6, 6, 0, 0]} animationDuration={1500} />
+            )}
+          </BarChart>
         </ResponsiveContainer>
       </div>
     </div>
