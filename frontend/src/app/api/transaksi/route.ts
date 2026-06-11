@@ -147,8 +147,8 @@ export async function POST(request: Request) {
           data.uraian,
           auth.user.name
         ];
-        // Asynchronous non-blocking call
-        appendToSheet(config[0].googleSheetId, data.kategori === 'Kas Jimpitan' ? 'Kas Jimpitan' : 'Kas Karangtaruna', rowData);
+        // Await is required in Serverless environments like Vercel
+        await appendToSheet(config[0].googleSheetId, data.kategori === 'Kas Jimpitan' ? 'Kas Jimpitan' : 'Kas Karangtaruna', rowData);
       }
     } catch (e) {
       console.error('Failed to sync to Google Sheets:', e);
