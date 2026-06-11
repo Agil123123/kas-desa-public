@@ -25,6 +25,7 @@ export default function KasKarangtarunaPage() {
   const [endDate, setEndDate] = useState("");
   const [orgName, setOrgName] = useState("");
   const [petugasId, setPetugasId] = useState("");
+  const [userRole, setUserRole] = useState("Anggota");
   const [searchQuery, setSearchQuery] = useState("");
 
   const fetchLedger = useCallback(async () => {
@@ -38,7 +39,12 @@ export default function KasKarangtarunaPage() {
   useEffect(() => { 
     fetchLedger(); 
     fetch('/api/pengaturan').then(r => r.json()).then(d => { if(d && d.namaOrganisasi) setOrgName(d.namaOrganisasi); }).catch(console.error);
-    fetch('/api/auth/me').then(r => r.json()).then(d => { if(d && d.user) setPetugasId(d.user.id); }).catch(console.error);
+    fetch('/api/auth/me').then(r => r.json()).then(d => { 
+      if(d && d.user) {
+        setPetugasId(d.user.id); 
+        setUserRole(d.user.role);
+      }
+    }).catch(console.error);
   }, [fetchLedger]);
 
   const totalPemasukan = ledger.filter(e => e.jenis === 'Masuk').reduce((s, e) => s + e.nominal, 0);
@@ -115,6 +121,16 @@ export default function KasKarangtarunaPage() {
       alert('Gagal menyimpan transaksi.');
     }
     setSaving(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Yakin ingin menghapus transaksi ini? Penghapusan akan memengaruhi laporan.')) return;
+    try {
+      await fetch(`/api/kas-karangtaruna/${id}`, { method: 'DELETE' });
+      fetchLedger();
+    } catch (e) {
+      alert('Gagal menghapus transaksi.');
+    }
   };
 
   return (
@@ -251,6 +267,9 @@ export default function KasKarangtarunaPage() {
                   {sortTanggal !== 'none' && (
                     <th className="hidden sm:table-cell py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Saldo Akhir</th>
                   )}
+                  {(userRole === 'Super Admin' || userRole === 'Admin' || userRole === 'Bendahara') && (
+                    <th className="py-2 px-3 sm:py-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Aksi</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -301,6 +320,13 @@ export default function KasKarangtarunaPage() {
                     </td>
                     {sortTanggal !== 'none' && (
                       <td className="hidden sm:table-cell py-2 px-3 sm:py-4 sm:px-6 text-right text-xs sm:text-sm font-bold text-gray-900 dark:text-white whitespace-nowrap">Rp {item.dynamicSaldo.toLocaleString('id-ID')}</td>
+                    )}
+                    {(userRole === 'Super Admin' || userRole === 'Admin' || userRole === 'Bendahara') && (
+                      <td className="py-2 px-3 sm:py-4 sm:px-6 text-right whitespace-nowrap">
+                        <button title="Hapus" onClick={() => handleDelete(item.id)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </td>
                     )}
                   </tr>
                 ))}
