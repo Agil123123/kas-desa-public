@@ -23,6 +23,9 @@ export const metadata: Metadata = {
   title: "NawaPintar",
   description: "Sistem Informasi Manajemen Keuangan Organisasi Desa",
   manifest: "/manifest.json",
+  icons: {
+    apple: "/apple-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
