@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import { db, kasKarangtaruna, transaksi, auditLog } from '@kas/backend';
+import { db, kasKarangtaruna, transaksi, auditLog, pengaturan } from '@kas/backend';
 import { eq } from 'drizzle-orm';
 import { requireAuth } from '@/lib/auth';
 import { generateId } from '@/lib/id';
 import { recalculateSaldoChain } from '@/lib/recalculate-saldo';
+import { deleteFromSheet } from '@/lib/google-sheets';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +24,14 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     }
 
     const trxId = record[0].transaksiId;
+
+    let noTransaksi = '';
+    if (trxId) {
+      const trxData = await db.select().from(transaksi).where(eq(transaksi.id, trxId));
+      if (trxData.length > 0) {
+        noTransaksi = trxData[0].noTransaksi;
+      }
+    }
 
     // ✅ Atomic cascading delete
     await db.transaction(async (tx) => {
@@ -49,6 +58,18 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
       });
     } catch (e) {
       console.error('Failed to write audit log', e);
+    }
+
+    // --- Google Sheets Sync Delete ---
+    if (noTransaksi) {
+      try {
+        const config = await db.select().from(pengaturan).limit(1);
+        if (config.length > 0 && config[0].googleSheetId) {
+          await deleteFromSheet(config[0].googleSheetId, 'Kas Karangtaruna', noTransaksi);
+        }
+      } catch (e) {
+        console.error('Failed to delete from Google Sheets:', e);
+      }
     }
 
     return NextResponse.json({ success: true });

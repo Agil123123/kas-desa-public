@@ -10,17 +10,12 @@ export function formatDateDDMMYYYY(dateString: string | null | undefined): strin
     const month = parts[1];
     const day = parts[2];
     
-    // Check if time is also provided (e.g. HH:mm or HH:mm:ss)
-    if (dateString.includes(' ') || dateString.includes('T')) {
-      const timePart = dateString.split(/[ T]/)[1]?.slice(0, 5); // get HH:mm
-      if (timePart) {
-        return `${day}-${month}-${year} ${timePart}`;
-      }
-    }
-    
     return `${day}-${month}-${year}`;
   }
 
-  // Fallback if format is not as expected
+  // Fallback if format is not as expected, but strip time if exists
+  if (dateString.includes(' ') || dateString.includes('T')) {
+      return dateString.split(/[ T]/)[0];
+  }
   return dateString;
 }
