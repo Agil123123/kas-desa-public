@@ -75,7 +75,7 @@ export async function POST(request: Request) {
         noTransaksi,
         wargaId: data.wargaId || null,
         petugasId,
-        tanggal: data.tanggal || new Date().toISOString().slice(0, 16).replace('T', ' '),
+        tanggal: data.tanggal || new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).slice(0, 16),
         nominal: data.nominal,
         kategori: data.kategori,
         jenis: data.jenis,
@@ -98,7 +98,7 @@ export async function POST(request: Request) {
           nominal: data.nominal,
           saldoAkhir: newSaldo,
           uraian: data.uraian || '',
-          tanggal: data.tanggal || new Date().toISOString().slice(0, 16).replace('T', ' '),
+          tanggal: data.tanggal || new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).slice(0, 16),
         });
       }
     });
@@ -138,6 +138,14 @@ export async function POST(request: Request) {
     try {
       const config = await db.select().from(pengaturan).limit(1);
       if (config.length > 0 && config[0].googleSheetId) {
+        let namaWargaUntukSheet = '-';
+        if (data.kategori === 'Kas Jimpitan' && data.wargaId) {
+          const w = await db.select().from(warga).where(eq(warga.id, data.wargaId));
+          if (w.length > 0) {
+            namaWargaUntukSheet = w[0].namaKk;
+          }
+        }
+
         const rowData = [
           created[0].noTransaksi,
           created[0].tanggal,
@@ -147,6 +155,11 @@ export async function POST(request: Request) {
           data.uraian,
           auth.user.name
         ];
+
+        if (data.kategori === 'Kas Jimpitan') {
+          rowData.push(namaWargaUntukSheet);
+        }
+
         // Await is required in Serverless environments like Vercel
         await appendToSheet(config[0].googleSheetId, data.kategori === 'Kas Jimpitan' ? 'Kas Jimpitan' : 'Kas Karangtaruna', rowData);
       }

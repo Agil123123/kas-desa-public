@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { formatDateDDMMYYYY } from "@/lib/formatDate";
 
 type Transaksi = {
   id: string;
@@ -171,7 +172,7 @@ export default function RiwayatTransaksiPage() {
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {filteredData.map((trx, index) => (
                   <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                    <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">{trx.tanggal}</td>
+                    <td className="py-4 px-6 text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">{formatDateDDMMYYYY(trx.tanggal)}</td>
                     <td className="py-4 px-6 whitespace-nowrap">
                       <div className="font-medium text-gray-900 dark:text-white">
                         {trx.kategori === 'Kas Jimpitan' ? (trx.namaWarga || 'Warga') : trx.uraian}

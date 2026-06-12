@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db, transaksi, kasKarangtaruna, auditLog, pengaturan } from '@kas/backend';
+import { db, transaksi, kasKarangtaruna, auditLog, pengaturan, warga } from '@kas/backend';
 import { eq } from 'drizzle-orm';
 import { requireAuth } from '@/lib/auth';
 import { generateId } from '@/lib/id';
@@ -50,6 +50,14 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       const config = await db.select().from(pengaturan).limit(1);
       if (config.length > 0 && config[0].googleSheetId && updated.length > 0) {
         const trx = updated[0];
+        let namaWargaUntukSheet = '-';
+        if (trx.kategori === 'Kas Jimpitan' && trx.wargaId) {
+          const w = await db.select().from(warga).where(eq(warga.id, trx.wargaId));
+          if (w.length > 0) {
+            namaWargaUntukSheet = w[0].namaKk;
+          }
+        }
+
         const rowData = [
           trx.noTransaksi,
           trx.tanggal,
@@ -59,6 +67,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
           trx.uraian,
           auth.user.name // Edited by
         ];
+
+        if (trx.kategori === 'Kas Jimpitan') {
+          rowData.push(namaWargaUntukSheet);
+        }
         await updateInSheet(config[0].googleSheetId, trx.kategori === 'Kas Jimpitan' ? 'Kas Jimpitan' : 'Kas Karangtaruna', trx.noTransaksi, rowData);
       }
     } catch (e) {

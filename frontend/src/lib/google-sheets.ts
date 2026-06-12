@@ -130,7 +130,8 @@ export async function updateInSheet(
     if (rowIndex === -1) return;
 
     // 2. Update row
-    const range = `${sheetName}!A${rowIndex + 1}:G${rowIndex + 1}`;
+    const endCol = String.fromCharCode(64 + data.length); // 7 items -> G, 8 items -> H
+    const range = `${sheetName}!A${rowIndex + 1}:${endCol}${rowIndex + 1}`;
     await sheets.spreadsheets.values.update({
       spreadsheetId,
       range,

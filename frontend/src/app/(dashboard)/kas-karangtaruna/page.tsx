@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { formatDateDDMMYYYY } from "@/lib/formatDate";
 
 type KasEntry = {
   id: string;
@@ -313,7 +314,7 @@ export default function KasKarangtarunaPage() {
                   return true;
                 }).map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                    <td className="py-2 px-3 sm:py-4 sm:px-6 text-xs sm:text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">{item.tanggal?.slice(0, 10) || '-'}</td>
+                    <td className="py-2 px-3 sm:py-4 sm:px-6 text-xs sm:text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">{formatDateDDMMYYYY(item.tanggal)}</td>
                     <td className="py-2 px-3 sm:py-4 sm:px-6 text-xs sm:text-sm font-medium text-gray-900 dark:text-white">{item.uraian}</td>
                     <td className="hidden sm:table-cell py-2 px-3 sm:py-4 sm:px-6 text-xs sm:text-sm text-gray-600 dark:text-gray-300">{item.namaPetugas || '-'}</td>
                     {/* Mobile: single Nominal column with color */}

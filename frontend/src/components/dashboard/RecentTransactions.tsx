@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from 'next/link';
+import { formatDateDDMMYYYY } from '@/lib/formatDate';
 
 type Transaksi = {
   id: string;
@@ -68,7 +69,7 @@ export default function RecentTransactions() {
                       {trx.kategori}
                     </span>
                   </td>
-                  <td className="py-2 px-3 sm:py-3 sm:px-6 text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{trx.tanggal?.slice(0, 10) || '-'}</td>
+                  <td className="py-2 px-3 sm:py-3 sm:px-6 text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatDateDDMMYYYY(trx.tanggal)}</td>
                   <td className="py-2 px-3 sm:py-3 sm:px-6 text-xs sm:text-sm font-medium whitespace-nowrap text-right">
                     <span className={trx.jenis === 'Masuk' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
                       {trx.jenis === 'Masuk' ? '+' : '-'} Rp {trx.nominal.toLocaleString('id-ID')}
