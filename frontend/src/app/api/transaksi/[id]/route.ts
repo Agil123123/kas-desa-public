@@ -71,6 +71,23 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         if (trx.kategori === 'Kas Jimpitan') {
           rowData.push(namaWargaUntukSheet);
         }
+
+        let computedSaldo = 0;
+        if (trx.kategori === 'Kas Karangtaruna') {
+          const kr = await db.select().from(kasKarangtaruna).where(eq(kasKarangtaruna.transaksiId, trx.id));
+          if (kr.length > 0) {
+            computedSaldo = kr[0].saldoAkhir;
+          }
+        } else if (trx.kategori === 'Kas Jimpitan') {
+          const { sql } = await import('drizzle-orm');
+          const res = await db.select({
+            masuk: sql<number>`SUM(CASE WHEN jenis='Masuk' THEN nominal ELSE 0 END)`.mapWith(Number),
+            keluar: sql<number>`SUM(CASE WHEN jenis='Keluar' THEN nominal ELSE 0 END)`.mapWith(Number)
+          }).from(transaksi).where(eq(transaksi.kategori, 'Kas Jimpitan'));
+          computedSaldo = (res[0]?.masuk || 0) - (res[0]?.keluar || 0);
+        }
+
+        rowData.push(computedSaldo);
         await updateInSheet(config[0].googleSheetId, trx.kategori === 'Kas Jimpitan' ? 'Kas Jimpitan' : 'Kas Karangtaruna', trx.noTransaksi, rowData);
       }
     } catch (e) {

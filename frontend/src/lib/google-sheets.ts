@@ -24,7 +24,7 @@ export async function appendToSheet(
 
     const sheets = google.sheets({ version: 'v4', auth });
 
-    await sheets.spreadsheets.values.append({
+    const response = await sheets.spreadsheets.values.append({
       spreadsheetId,
       range: `${sheetName}!A1`,
       valueInputOption: 'USER_ENTERED',
@@ -32,6 +32,50 @@ export async function appendToSheet(
         values: [data],
       },
     });
+
+    const rangeStr = response.data.updates?.updatedRange;
+    if (rangeStr) {
+      const rowMatch = rangeStr.match(/\d+$/);
+      if (rowMatch) {
+        const rowIndex = parseInt(rowMatch[0], 10) - 1;
+        const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId });
+        const sheet = spreadsheet.data.sheets?.find(s => s.properties?.title === sheetName);
+        if (sheet && sheet.properties?.sheetId !== undefined) {
+          const sheetId = sheet.properties.sheetId;
+          const jenis = data[3];
+          const isMasuk = jenis === 'Masuk';
+          
+          await sheets.spreadsheets.batchUpdate({
+            spreadsheetId,
+            requestBody: {
+              requests: [
+                {
+                  repeatCell: {
+                    range: {
+                      sheetId: sheetId,
+                      startRowIndex: rowIndex,
+                      endRowIndex: rowIndex + 1,
+                      startColumnIndex: 4, // Column E
+                      endColumnIndex: 5
+                    },
+                    cell: {
+                      userEnteredFormat: {
+                        textFormat: {
+                          foregroundColor: isMasuk 
+                            ? { red: 0.1, green: 0.6, blue: 0.2 } // Green
+                            : { red: 0.8, green: 0.1, blue: 0.1 } // Red
+                        }
+                      }
+                    },
+                    fields: "userEnteredFormat.textFormat.foregroundColor"
+                  }
+                }
+              ]
+            }
+          });
+        }
+      }
+    }
     console.log('Successfully appended row to Google Sheet:', sheetName);
   } catch (error) {
     console.error('Failed to append to Google Sheet:', error);
@@ -140,6 +184,43 @@ export async function updateInSheet(
         values: [data],
       },
     });
+
+    const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId });
+    const sheet = spreadsheet.data.sheets?.find(s => s.properties?.title === sheetName);
+    if (sheet && sheet.properties?.sheetId !== undefined) {
+      const sheetId = sheet.properties.sheetId;
+      const jenis = data[3];
+      const isMasuk = jenis === 'Masuk';
+      
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId,
+        requestBody: {
+          requests: [
+            {
+              repeatCell: {
+                range: {
+                  sheetId: sheetId,
+                  startRowIndex: rowIndex,
+                  endRowIndex: rowIndex + 1,
+                  startColumnIndex: 4, // Column E
+                  endColumnIndex: 5
+                },
+                cell: {
+                  userEnteredFormat: {
+                    textFormat: {
+                      foregroundColor: isMasuk 
+                        ? { red: 0.1, green: 0.6, blue: 0.2 } // Green
+                        : { red: 0.8, green: 0.1, blue: 0.1 } // Red
+                    }
+                  }
+                },
+                fields: "userEnteredFormat.textFormat.foregroundColor"
+              }
+            }
+          ]
+        }
+      });
+    }
     console.log(`Successfully updated row in Google Sheet:`, sheetName);
   } catch (error) {
     console.error('Failed to update in Google Sheet:', error);

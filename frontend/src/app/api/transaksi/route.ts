@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     const petugasId = auth.user.id;
 
     // ✅ FIX CRITICAL-4: Atomic transaction — both transaksi + kasKarangtaruna in one tx
-    await db.transaction(async (tx) => {
+    const saldoAkhir = await db.transaction(async (tx) => {
       await tx.insert(transaksi).values({
         id,
         noTransaksi,
@@ -100,7 +100,18 @@ export async function POST(request: Request) {
           uraian: data.uraian || '',
           tanggal: data.tanggal || new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).slice(0, 16),
         });
+        
+        return newSaldo;
+      } else if (data.kategori === 'Kas Jimpitan') {
+        const { sql } = await import('drizzle-orm');
+        const res = await tx.select({
+          masuk: sql<number>`SUM(CASE WHEN jenis='Masuk' THEN nominal ELSE 0 END)`.mapWith(Number),
+          keluar: sql<number>`SUM(CASE WHEN jenis='Keluar' THEN nominal ELSE 0 END)`.mapWith(Number)
+        }).from(transaksi).where(eq(transaksi.kategori, 'Kas Jimpitan'));
+        
+        return (res[0]?.masuk || 0) - (res[0]?.keluar || 0);
       }
+      return 0;
     });
 
     // --- System Notification Trigger (non-critical, outside transaction) ---
@@ -159,6 +170,9 @@ export async function POST(request: Request) {
         if (data.kategori === 'Kas Jimpitan') {
           rowData.push(namaWargaUntukSheet);
         }
+
+        // Tampilkan total saldo saat ini di kolom paling kanan
+        rowData.push(saldoAkhir);
 
         // Await is required in Serverless environments like Vercel
         await appendToSheet(config[0].googleSheetId, data.kategori === 'Kas Jimpitan' ? 'Kas Jimpitan' : 'Kas Karangtaruna', rowData);
