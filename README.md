@@ -98,5 +98,34 @@ Jika Anda menjalankan `npm run db:seed` di backend, Anda dapat masuk menggunakan
 - **Petugas:** `petugas@jimpitan.desa` / password: `password123`
 - **Anggota:** `anggota@jimpitan.desa` / password: `password123`
 
+## 🛠️ Panduan Penyesuaian (Jika Anda Melakukan Clone/Fork)
+
+Jika Anda adalah pengembang atau organisasi lain yang mengunduh (clone/fork) *source code* ini untuk diterapkan di desa/komunitas Anda sendiri, Anda wajib melakukan penyesuaian pada beberapa hal berikut sebelum aplikasi dapat berjalan dengan lancar:
+
+### 1. Variabel Lingkungan (`.env`)
+Karena file `.env` tidak disertakan di GitHub demi keamanan, buatlah file `.env` baru di direktori `frontend` yang berisi konfigurasi berikut:
+- `NEXTAUTH_SECRET`: Generate kunci rahasia untuk autentikasi sesi (misal menggunakan perintah `openssl rand -base64 32`).
+- Kredensial Database (e.g., `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`) jika Anda menggunakan Drizzle dengan Turso SQLite, atau `DATABASE_URL` standar.
+- `GOOGLE_CLIENT_EMAIL` & `GOOGLE_PRIVATE_KEY`: Untuk mengaktifkan fitur sinkronisasi pembukuan otomatis ke Google Sheets.
+
+### 2. Branding (Identitas Aplikasi)
+Ubah identitas default (NawaPintar) menjadi nama organisasi Anda:
+- **Nama & Deskripsi Web:** Edit konfigurasi `metadata` di file `frontend/src/app/layout.tsx`.
+- **Progressive Web App (PWA):** Sesuaikan `name` dan `short_name` pada file `frontend/public/manifest.json`.
+- **Logo & Ikon:** Ganti gambar/ikon standar seperti `apple-icon.png` di folder `frontend/public/` dan logo SVG di komponen Navbar/Sidebar.
+
+### 3. Akun Super Admin Bawaan Pabrik
+Setelah instalasi selesai, sesuaikan kredensial Admin awal Anda di file skrip *seeding* database (contoh: `backend/db/seed.ts`). Ubah *Email* dan *Password* agar Anda bisa *login* untuk pertama kalinya.
+
+### 4. Struktur Nama Google Sheets (Wajib Presisi)
+Jika Anda mengaktifkan fitur ekspor Google Sheets di panel **Pengaturan** aplikasi (dengan memasukkan Spreadsheet ID), Anda wajib membuat *Tab/Sheet* di file Excel Google tersebut dengan nama persis seperti di bawah ini:
+- `Kas Karangtaruna`
+- `Kas Jimpitan`
+
+*(Peringatan: Jika Anda mengubah nama sheet ini di Google Sheets, Anda juga harus menyesuaikan string "Kas Karangtaruna" dan "Kas Jimpitan" pada file `frontend/src/app/api/transaksi/route.ts` dan fungsi terkait lainnya).*
+
+### 5. Opsi RT/Lingkungan
+Jika ada pembatasan/opsi RT dan RW yang tertulis manual (*hardcoded*) pada form pendaftaran warga (terutama jika tidak diambil dinamis dari database), carilah opsi tersebut di file antarmuka (contoh `frontend/src/app/(dashboard)/warga/page.tsx`) dan ubah jumlah opsinya sesuai dengan jumlah RT di desa Anda.
+
 ---
 &copy; NawaPintar (Jimpitan Desa Digital) - Dikembangkan untuk kebutuhan digitalisasi organisasi masyarakat desa.
