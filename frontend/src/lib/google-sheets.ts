@@ -60,14 +60,12 @@ export async function appendToSheet(
                     },
                     cell: {
                       userEnteredFormat: {
-                        textFormat: {
-                          foregroundColor: isMasuk 
-                            ? { red: 0.1, green: 0.6, blue: 0.2 } // Green
-                            : { red: 0.8, green: 0.1, blue: 0.1 } // Red
-                        }
+                        backgroundColor: isMasuk 
+                          ? { red: 0.85, green: 0.95, blue: 0.85 } // Light Green
+                          : { red: 0.98, green: 0.85, blue: 0.85 } // Light Red
                       }
                     },
-                    fields: "userEnteredFormat.textFormat.foregroundColor"
+                    fields: "userEnteredFormat.backgroundColor"
                   }
                 }
               ]
@@ -207,14 +205,12 @@ export async function updateInSheet(
                 },
                 cell: {
                   userEnteredFormat: {
-                    textFormat: {
-                      foregroundColor: isMasuk 
-                        ? { red: 0.1, green: 0.6, blue: 0.2 } // Green
-                        : { red: 0.8, green: 0.1, blue: 0.1 } // Red
-                    }
+                    backgroundColor: isMasuk 
+                      ? { red: 0.85, green: 0.95, blue: 0.85 } // Light Green
+                      : { red: 0.98, green: 0.85, blue: 0.85 } // Light Red
                   }
                 },
-                fields: "userEnteredFormat.textFormat.foregroundColor"
+                fields: "userEnteredFormat.backgroundColor"
               }
             }
           ]
